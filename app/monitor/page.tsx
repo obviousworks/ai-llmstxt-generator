@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 
 interface MonitoredSite {
@@ -19,7 +19,13 @@ interface UpdateResult {
     severity: string;
     new_pages: string[];
     removed_pages: string[];
-    modified_pages: any[];
+    modified_pages: {
+      url: string;
+      old_title: string;
+      new_title: string;
+      old_section: string;
+      new_section: string;
+    }[];
   };
   update_reason?: string;
   message?: string;
@@ -47,11 +53,7 @@ export default function MonitorPage() {
 
   const SCHEDULER_URL = getSchedulerUrl();
 
-  useEffect(() => {
-    loadMonitoredSites();
-  }, []);
-
-  const loadMonitoredSites = async () => {
+  const loadMonitoredSites = useCallback(async () => {
     try {
       const endpoint = API_URL === 'http://localhost:8000' ? '/scheduler' : '/api/scheduler';
       const response = await fetch(`${SCHEDULER_URL}${endpoint}`, {
@@ -66,7 +68,11 @@ export default function MonitorPage() {
     } catch (error) {
       console.error('Error loading monitored sites:', error);
     }
-  };
+  }, [API_URL, SCHEDULER_URL]);
+
+  useEffect(() => {
+    loadMonitoredSites();
+  }, [loadMonitoredSites]);
 
   const addSiteToMonitoring = async (e: React.FormEvent) => {
     e.preventDefault();

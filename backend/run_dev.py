@@ -25,9 +25,9 @@ def run_servers():
         # Start main API server on port 8000
         print("📡 Starting main API server on http://localhost:8000")
         main_process = subprocess.Popen([
-            sys.executable, "-c",
-            "import uvicorn; from backend.main import app; uvicorn.run(app, host='0.0.0.0', port=8000, reload=True)"
-        ], cwd=backend_dir.parent)
+            sys.executable, "-m", "uvicorn", "main:app", 
+            "--host", "0.0.0.0", "--port", "8000", "--reload"
+        ], cwd=backend_dir)
         processes.append(("Main API", main_process))
         
         # Wait a moment before starting scheduler
@@ -36,9 +36,9 @@ def run_servers():
         # Start scheduler server on port 8001
         print("⏰ Starting scheduler service on http://localhost:8001")
         scheduler_process = subprocess.Popen([
-            sys.executable, "-c", 
-            "import uvicorn; from backend.scheduler import scheduler_app; uvicorn.run(scheduler_app, host='0.0.0.0', port=8001, reload=True)"
-        ], cwd=backend_dir.parent)
+            sys.executable, "-m", "uvicorn", "scheduler:scheduler_app",
+            "--host", "0.0.0.0", "--port", "8001", "--reload"
+        ], cwd=backend_dir)
         processes.append(("Scheduler", scheduler_process))
         
         print("\n✅ Both servers are running!")

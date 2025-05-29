@@ -11,19 +11,19 @@
   ],
   "functions": {
     "api/generate.py": {
-      "maxDuration": 300
+      "maxDuration": 60
     },
     "api/scheduler.py": {
-      "maxDuration": 600
+      "maxDuration": 60
     },
     "api/cron.py": {
-      "maxDuration": 900
+      "maxDuration": 60
     }
   },
   "crons": [
     {
       "path": "/api/cron",
-      "schedule": "0 */6 * * *"
+      "schedule": "0 12 * * *"
     }
   ]
 } 

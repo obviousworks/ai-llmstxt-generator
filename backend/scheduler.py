@@ -7,7 +7,7 @@ import time
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 import os
-from .main import WebsiteCrawler, LLMSTxtGenerator
+from main import WebsiteCrawler, LLMSTxtGenerator
 
 # In-memory storage for demo (in production, use a database)
 MONITORED_SITES = {}

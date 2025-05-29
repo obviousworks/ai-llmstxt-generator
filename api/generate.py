@@ -440,8 +440,22 @@ Return only the improved section with the same simple link format."""
                         clean_desc = description.strip()
                         # Remove common prefixes and suffixes
                         clean_desc = clean_desc.replace("Learn more about ", "").replace("Documentation for ", "")
-                        if len(clean_desc) > 120:
-                            clean_desc = clean_desc[:117] + "..."
+                        
+                        # Smart truncation - prefer complete sentences
+                        if len(clean_desc) > 150:
+                            # Try to truncate at sentence boundary
+                            sentences = clean_desc.split('. ')
+                            if len(sentences) > 1 and len(sentences[0]) < 120:
+                                clean_desc = sentences[0]
+                                if not clean_desc.endswith('.'):
+                                    clean_desc += '.'
+                            else:
+                                # Truncate at word boundary, no "..."
+                                words = clean_desc[:140].split(' ')
+                                clean_desc = ' '.join(words[:-1])
+                                if not clean_desc.endswith('.'):
+                                    clean_desc += '.'
+                        
                         final_description = clean_desc
                     else:
                         # Generate a meaningful description based on title, URL, and content

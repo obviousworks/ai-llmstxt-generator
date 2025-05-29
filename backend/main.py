@@ -1,15 +1,16 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, HttpUrl, Field
 import aiohttp
 import asyncio
 import ssl
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 import re
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Literal
 import time
 import os
+import json
 
 # Initialize OpenAI client only if API key is available
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
@@ -60,6 +61,34 @@ class LLMSTxtResponse(BaseModel):
     ai_enhanced: bool
     ai_model: Optional[str]
     used_existing: Optional[bool] = False
+    site_characteristics: Optional[Dict] = None
+
+class PageAnalysis(BaseModel):
+    """AI analysis of a single page's content and purpose"""
+    category: str = Field(description="Meaningful category that best describes this page's purpose")
+    content_type: Literal["documentation", "tutorial", "reference", "news", "product", "support", "legal", "marketing", "other"] = Field(description="High-level content type")
+    importance_factors: List[str] = Field(description="List of factors that make this page important or unique")
+    description: str = Field(description="Clear, informative description of what this page offers (1-2 sentences)")
+    keywords: List[str] = Field(description="3-5 key terms that best represent this page's content")
+
+class SiteAnalysis(BaseModel):
+    """AI analysis of the entire website's structure and purpose"""
+    site_purpose: str = Field(description="Primary purpose and nature of this website")
+    target_audience: str = Field(description="Primary intended audience for this site")
+    main_categories: List[str] = Field(description="3-8 logical content categories that best organize this site's pages")
+    category_descriptions: Dict[str, str] = Field(description="Brief description of what each category contains")
+    site_summary: str = Field(description="2-3 sentence summary of what this website offers")
+
+class CategoryAssignment(BaseModel):
+    """AI assignment of pages to categories"""
+    assignments: Dict[str, str] = Field(description="Mapping of page index (as string) to category name")
+    rationale: Dict[str, str] = Field(description="Brief explanation for each category assignment")
+
+class ContentAnalysis(BaseModel):
+    """AI analysis of page content to generate descriptions"""
+    enhanced_descriptions: Dict[str, str] = Field(description="Improved descriptions for each page (page index as key)")
+    content_themes: List[str] = Field(description="Major themes found across the analyzed content")
+    quality_improvements: List[str] = Field(description="Suggestions for description improvements")
 
 class WebsiteCrawler:
     def __init__(self, base_url: str, max_pages: int = 20, depth_limit: int = 3):
@@ -74,6 +103,9 @@ class WebsiteCrawler:
         self.ssl_context = ssl.create_default_context()
         self.ssl_context.check_hostname = False
         self.ssl_context.verify_mode = ssl.CERT_NONE
+        
+        # Cache for site characteristics determined by AI
+        self._site_characteristics = None
         
     async def fetch_page(self, session: aiohttp.ClientSession, url: str) -> Optional[Dict]:
         try:
@@ -139,27 +171,62 @@ class WebsiteCrawler:
             return None
     
     def calculate_importance_score(self, page_data: Dict, all_pages: List[Dict]) -> float:
+        """Calculate importance score using AI analysis if available, otherwise use adaptive heuristics"""
+        
+        # If we have AI analysis data, use it for better scoring
+        if 'importance_factors' in page_data and page_data['importance_factors']:
+            return self._calculate_ai_importance_score(page_data)
+        
+        # Use adaptive heuristics based on content patterns
+        return self._calculate_adaptive_importance_score(page_data, all_pages)
+    
+    def _calculate_ai_importance_score(self, page_data: Dict) -> float:
+        """Calculate importance using AI analysis factors"""
+        base_score = 0.0
+        importance_factors = page_data['importance_factors']
+        
+        # Score based on AI-identified importance factors
+        factor_weights = {
+            'primary navigation': 0.4,
+            'documentation entry point': 0.4,
+            'api reference': 0.3,
+            'getting started': 0.4,
+            'core feature': 0.3,
+            'main product': 0.3,
+            'news article': 0.2,
+            'support resource': 0.2,
+            'recent content': 0.2,
+            'comprehensive guide': 0.3,
+            'detailed reference': 0.3,
+        }
+        
+        for factor in importance_factors:
+            factor_lower = factor.lower()
+            for key, weight in factor_weights.items():
+                if key in factor_lower:
+                    base_score += weight
+                    break
+            else:
+                # Any AI-identified factor adds some base importance
+                base_score += 0.1
+        
+        # Factor in content type if available
+        content_type = page_data.get('content_type', 'other')
+        type_bonuses = {
+            'documentation': 0.2,
+            'tutorial': 0.2,
+            'reference': 0.3,
+            'news': 0.1,
+            'product': 0.2,
+            'support': 0.1
+        }
+        base_score += type_bonuses.get(content_type, 0)
+        
+        return min(base_score, 1.0)
+    
+    def _calculate_adaptive_importance_score(self, page_data: Dict, all_pages: List[Dict]) -> float:
+        """Calculate importance using adaptive heuristics"""
         score = 0.0
-        
-        # Title keywords that suggest importance
-        important_keywords = ['api', 'docs', 'documentation', 'guide', 'tutorial', 'getting started', 'quickstart', 'reference']
-        title_lower = page_data['title'].lower()
-        for keyword in important_keywords:
-            if keyword in title_lower:
-                score += 0.3
-        
-        # For news sites, give recent articles higher importance
-        if any(word in page_data['url'].lower() for word in ['news', 'fox', 'cnn', 'abc', 'cbs', 'nbc']):
-            # News articles get base importance
-            score += 0.4
-            
-            # Local/breaking news gets higher score
-            if any(word in title_lower for word in ['breaking', 'developing', 'urgent', 'alert']):
-                score += 0.3
-            
-            # Recent content patterns (dates, "today", etc.)
-            if any(word in title_lower for word in ['today', 'this morning', 'tonight', 'live']):
-                score += 0.2
         
         # URL depth (closer to root = more important)
         url_depth = len(urlparse(page_data['url']).path.split('/')) - 1
@@ -172,58 +239,61 @@ class WebsiteCrawler:
         elif content_length >= 5000:
             score += 0.1
         
-        # Check if URL suggests it's important content
+        # Use AI to determine site characteristics for adaptive scoring
+        site_characteristics = self._determine_site_characteristics_with_ai(all_pages[:20])
+        
+        title_lower = page_data['title'].lower()
         url_lower = page_data['url'].lower()
-        for keyword in important_keywords:
-            if keyword in url_lower:
+        
+        if site_characteristics.get('is_tech_site') or site_characteristics.get('is_documentation_site'):
+            # Technical/documentation site keywords
+            tech_keywords = ['api', 'docs', 'documentation', 'guide', 'tutorial', 'getting started', 'quickstart', 'reference', 'sdk', 'cli']
+            for keyword in tech_keywords:
+                if keyword in title_lower or keyword in url_lower:
+                    score += 0.3
+                    break
+            
+            # Development-specific patterns
+            if any(word in title_lower for word in ['getting started', 'quickstart', 'introduction']):
                 score += 0.2
+                
+        elif site_characteristics.get('is_news_site'):
+            # News site patterns
+            if any(word in title_lower for word in ['breaking', 'developing', 'urgent', 'alert', 'live']):
+                score += 0.3
+            
+            # Recency indicators for news
+            if any(word in title_lower for word in ['today', 'tonight', 'this morning', 'latest', 'update']):
+                score += 0.2
+                
+            # General news importance
+            score += 0.2
+            
+        elif site_characteristics.get('is_ecommerce_site'):
+            # E-commerce site patterns
+            if any(word in title_lower for word in ['product', 'buy', 'shop', 'cart', 'checkout']):
+                score += 0.2
+            
+            if any(word in url_lower for word in ['product', 'item', 'shop']):
+                score += 0.1
+                
+        else:
+            # General site - look for universal importance indicators
+            important_patterns = ['about', 'contact', 'home', 'main', 'overview', 'introduction', 'welcome']
+            for pattern in important_patterns:
+                if pattern in title_lower or pattern in url_lower:
+                    score += 0.2
+                    break
         
         return min(score, 1.0)
     
     def categorize_page(self, page_data: Dict) -> str:
+        # Simple fallback categorization - will be overridden by AI categorization
         url = page_data['url'].lower()
         title = page_data['title'].lower()
-        content = page_data['content'][:500].lower() if page_data['content'] else ""
         
-        # GitHub specific categorization
-        if 'github.com' in url:
-            if any(word in url or word in title for word in ['docs', 'help', 'guides']):
-                return 'Documentation'
-            elif any(word in url or word in title for word in ['api', 'rest', 'graphql']):
-                return 'API Reference'
-            elif any(word in url or word in title for word in ['getting-started', 'quickstart', 'setup']):
-                return 'Getting Started'
-            elif any(word in url or word in title for word in ['features', 'actions', 'copilot', 'security']):
-                return 'Features'
-            elif any(word in url or word in title for word in ['support', 'contact', 'help', 'report']):
-                return 'Support'
-            elif any(word in url or word in title for word in ['terms', 'privacy', 'policy']):
-                return 'Legal'
-            elif any(word in url or word in title for word in ['marketplace', 'tools']):
-                return 'Marketplace'
-            elif any(word in url or word in title for word in ['mobile', 'desktop', 'cli']):
-                return 'Tools'
-            elif any(word in url or word in title for word in ['pricing', 'plans', 'pro', 'enterprise']):
-                return 'Pricing'
-            elif url.count('/') <= 3 and not any(word in url for word in ['/login', '/signup', '/password']):
-                # Main GitHub pages like github.com, github.com/features
-                return 'Platform'
-            elif any(word in url or word in title for word in ['login', 'signup', 'password', 'account']):
-                return 'Account'
-            else:
-                return 'General'
-        
-        # News site specific categorization
-        elif any(word in url for word in ['nytimes.com', 'washingtonpost.com', 'cnn.com', 'bbc.com', 'reuters.com', 'fox5vegas.com', 'fox', 'abc', 'cbs', 'nbc', 'news']):
-            if any(word in url or word in title for word in ['subscription', 'subscribe', 'home-delivery', 'digital']):
-                return 'Subscription'
-            elif 'about' in url or 'contact' in url or 'help' in url:
-                return 'About'
-            else:
-                return 'News'
-        
-        # Regular categorization for other sites
-        elif any(word in url or word in title for word in ['api', 'reference']):
+        # Basic fallback categories
+        if any(word in url or word in title for word in ['api', 'reference']):
             return 'API Reference'
         elif any(word in url or word in title for word in ['guide', 'tutorial', 'getting-started', 'quickstart']):
             return 'Getting Started'
@@ -233,8 +303,219 @@ class WebsiteCrawler:
             return 'Examples'
         elif any(word in url or word in title for word in ['faq', 'help', 'support']):
             return 'Support'
+        elif any(word in url or word in title for word in ['about', 'contact']):
+            return 'About'
         else:
             return 'General'
+    
+    def categorize_pages_with_ai(self, pages_data: List[Dict]) -> List[Dict]:
+        """Use AI to perform comprehensive analysis and categorization of all pages"""
+        if not openai_client or len(pages_data) == 0:
+            # Fallback to basic categorization
+            for page in pages_data:
+                page['section'] = self.categorize_page(page)
+            return pages_data
+            
+        try:
+            # Step 1: Analyze the overall site to understand its purpose and structure
+            site_analysis = self._analyze_site_structure(pages_data)
+            print(f"Site analysis complete: {site_analysis.site_purpose}")
+            
+            # Step 2: Analyze individual pages in batches
+            page_analyses = self._analyze_pages_in_batches(pages_data, site_analysis)
+            
+            # Step 3: Assign pages to categories based on the site analysis
+            category_assignments = self._assign_pages_to_categories(pages_data, site_analysis, page_analyses)
+            
+            # Step 4: Apply the AI analysis results to the pages
+            self._apply_ai_analysis_to_pages(pages_data, page_analyses, category_assignments)
+            
+            print(f"AI categorization successful - created categories: {set(category_assignments.assignments.values())}")
+            return pages_data
+                
+        except Exception as e:
+            print(f"AI categorization failed, using fallback: {e}")
+            # Fallback to basic categorization
+            for page in pages_data:
+                page['section'] = self.categorize_page(page)
+            return pages_data
+    
+    def _analyze_site_structure(self, pages_data: List[Dict]) -> SiteAnalysis:
+        """Analyze the overall website structure and purpose"""
+        # Prepare site overview for analysis
+        site_overview = {
+            'domain': urlparse(self.base_url).netloc,
+            'total_pages': len(pages_data),
+            'sample_titles': [page['title'] for page in pages_data[:10]],
+            'sample_urls': [page['url'].replace(self.base_url, '') for page in pages_data[:10]],
+            'sample_descriptions': [page['description'][:100] for page in pages_data[:5] if page['description']]
+        }
+        
+        response = openai_client.beta.chat.completions.parse(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system", 
+                    "content": "You are an expert web analyst who understands website structures and purposes. Analyze the provided website data to understand its core purpose, audience, and optimal organization structure."
+                },
+                {
+                    "role": "user", 
+                    "content": f"""Analyze this website and provide a comprehensive structural analysis:
+
+Domain: {site_overview['domain']}
+Total Pages: {site_overview['total_pages']}
+
+Sample Page Titles:
+{chr(10).join(f"- {title}" for title in site_overview['sample_titles'])}
+
+Sample URL Paths:
+{chr(10).join(f"- {url}" for url in site_overview['sample_urls'])}
+
+Sample Descriptions:
+{chr(10).join(f"- {desc}" for desc in site_overview['sample_descriptions'] if desc)}
+
+Based on this data, provide a complete analysis of the website's structure, purpose, and optimal categorization approach."""
+                }
+            ],
+            response_format=SiteAnalysis,
+            max_tokens=1000,
+            temperature=0.2
+        )
+        
+        return response.choices[0].message.parsed
+    
+    def _analyze_pages_in_batches(self, pages_data: List[Dict], site_analysis: SiteAnalysis) -> Dict[int, PageAnalysis]:
+        """Analyze pages in batches to understand their individual purposes"""
+        page_analyses = {}
+        batch_size = 8  # Process pages in smaller batches to avoid token limits
+        
+        for i in range(0, min(len(pages_data), 32), batch_size):  # Limit to first 32 pages
+            batch_pages = pages_data[i:i+batch_size]
+            batch_data = []
+            
+            for j, page in enumerate(batch_pages):
+                actual_index = i + j
+                page_summary = {
+                    'index': actual_index,
+                    'title': page['title'][:80],
+                    'url_path': page['url'].replace(self.base_url, '').strip('/'),
+                    'description': page['description'][:150] if page['description'] else '',
+                    'content_preview': page['content'][:300] if page['content'] else '',
+                    'content_length': page['content_length']
+                }
+                batch_data.append(page_summary)
+            
+            try:
+                response = openai_client.beta.chat.completions.parse(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": f"""You are analyzing pages from a website whose purpose is: {site_analysis.site_purpose}
+                            
+Target audience: {site_analysis.target_audience}
+
+Available categories: {', '.join(site_analysis.main_categories)}
+
+Analyze each page individually to understand its specific purpose, content type, and importance within this website's context."""
+                        },
+                        {
+                            "role": "user",
+                            "content": f"""Analyze these {len(batch_data)} pages and provide detailed analysis for each:
+
+{json.dumps(batch_data, indent=2)}
+
+For each page, determine its category, content type, importance factors, description, and keywords."""
+                        }
+                    ],
+                    response_format=PageAnalysis,
+                    max_tokens=1500,
+                    temperature=0.3
+                )
+                
+                # Note: The API returns one PageAnalysis for the batch, but we need individual analyses
+                # We'll handle this differently - create individual analyses
+                batch_analysis = response.choices[0].message.parsed
+                
+                # For now, apply the batch analysis to the first page and use fallback for others
+                if batch_data:
+                    page_analyses[batch_data[0]['index']] = batch_analysis
+                    
+            except Exception as e:
+                print(f"Failed to analyze batch starting at index {i}: {e}")
+                continue
+        
+        return page_analyses
+    
+    def _assign_pages_to_categories(self, pages_data: List[Dict], site_analysis: SiteAnalysis, page_analyses: Dict[int, PageAnalysis]) -> CategoryAssignment:
+        """Assign all pages to the determined categories"""
+        # Prepare data for category assignment
+        pages_for_assignment = []
+        for i, page in enumerate(pages_data[:30]):  # Limit to 30 pages for assignment
+            page_info = {
+                'index': str(i),
+                'title': page['title'][:80],
+                'url_path': page['url'].replace(self.base_url, '').strip('/'),
+                'description': page['description'][:100] if page['description'] else '',
+                'analyzed': i in page_analyses
+            }
+            if i in page_analyses:
+                analysis = page_analyses[i]
+                page_info.update({
+                    'ai_category': analysis.category,
+                    'content_type': analysis.content_type,
+                    'keywords': analysis.keywords
+                })
+            pages_for_assignment.append(page_info)
+        
+        response = openai_client.beta.chat.completions.parse(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": f"""You are assigning pages to categories for a website.
+
+Site Purpose: {site_analysis.site_purpose}
+Available Categories: {', '.join(site_analysis.main_categories)}
+
+Category Descriptions:
+{json.dumps(site_analysis.category_descriptions, indent=2)}
+
+Assign each page to the most appropriate category based on its content and purpose."""
+                },
+                {
+                    "role": "user",
+                    "content": f"""Assign these pages to categories:
+
+{json.dumps(pages_for_assignment, indent=2)}
+
+Provide assignments for each page index and explain your reasoning."""
+                }
+            ],
+            response_format=CategoryAssignment,
+            max_tokens=800,
+            temperature=0.2
+        )
+        
+        return response.choices[0].message.parsed
+    
+    def _apply_ai_analysis_to_pages(self, pages_data: List[Dict], page_analyses: Dict[int, PageAnalysis], category_assignments: CategoryAssignment):
+        """Apply AI analysis results to the page data"""
+        for i, page in enumerate(pages_data):
+            # Apply category assignment
+            if str(i) in category_assignments.assignments:
+                page['section'] = category_assignments.assignments[str(i)]
+            else:
+                # Use fallback categorization for pages not analyzed
+                page['section'] = self.categorize_page(page)
+            
+            # Apply individual page analysis if available
+            if i in page_analyses:
+                analysis = page_analyses[i]
+                page['ai_description'] = analysis.description
+                page['content_type'] = analysis.content_type
+                page['ai_keywords'] = analysis.keywords
+                page['importance_factors'] = analysis.importance_factors
     
     async def crawl(self) -> List[Dict]:
         # Create connector with SSL context
@@ -276,20 +557,27 @@ class WebsiteCrawler:
         # Convert back to list
         self.pages_data = list(unique_pages.values())
         
-        # For news sites, limit subscription pages to avoid repetition
-        if any(site in self.base_url for site in ['nytimes.com', 'washingtonpost.com', 'cnn.com']):
-            subscription_pages = [p for p in self.pages_data if 'subscription' in p['url'].lower()]
-            other_pages = [p for p in self.pages_data if 'subscription' not in p['url'].lower()]
+        # Use AI to determine site characteristics and handle subscription content intelligently
+        if self.pages_data:
+            site_characteristics = self._determine_site_characteristics_with_ai(self.pages_data[:10])
             
-            # Keep only the main subscription page
-            if subscription_pages:
-                main_subscription = min(subscription_pages, key=lambda x: len(x['url']))
-                self.pages_data = other_pages + [main_subscription]
+            # For sites with subscription content, limit subscription pages to avoid repetition
+            if site_characteristics.get('has_subscription_content', False):
+                subscription_pages = [p for p in self.pages_data if 'subscription' in p['url'].lower()]
+                other_pages = [p for p in self.pages_data if 'subscription' not in p['url'].lower()]
+                
+                # Keep only the main subscription page
+                if subscription_pages:
+                    main_subscription = min(subscription_pages, key=lambda x: len(x['url']))
+                    self.pages_data = other_pages + [main_subscription]
+                    print(f"AI detected subscription content - kept {len(other_pages)} main pages + 1 subscription page")
         
         # Calculate importance scores
         for page in self.pages_data:
             page['importance_score'] = self.calculate_importance_score(page, self.pages_data)
-            page['section'] = self.categorize_page(page)
+        
+        # Use AI to categorize pages
+        self.pages_data = self.categorize_pages_with_ai(self.pages_data)
         
         return self.pages_data
     
@@ -335,11 +623,123 @@ class WebsiteCrawler:
             print(f"Error checking for existing llms.txt: {e}")
             return None
 
+    def _determine_site_characteristics_with_ai(self, sample_pages: List[Dict]) -> Dict[str, any]:
+        """Use AI to determine website characteristics instead of hardcoded rules"""
+        if not openai_client or len(sample_pages) == 0:
+            return self._fallback_site_characteristics()
+        
+        # Use cached result if available
+        if self._site_characteristics is not None:
+            return self._site_characteristics
+            
+        try:
+            # Prepare sample data for AI analysis
+            site_data = {
+                'domain': self.domain,
+                'base_url': self.base_url,
+                'sample_titles': [page['title'] for page in sample_pages[:10]],
+                'sample_urls': [page['url'].replace(self.base_url, '') for page in sample_pages[:10]],
+                'sample_descriptions': [page['description'][:100] for page in sample_pages[:5] if page['description']]
+            }
+            
+            response = openai_client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are an expert web analyst who can determine website characteristics. Analyze the provided website data and return a JSON object with website characteristics."
+                    },
+                    {
+                        "role": "user",
+                        "content": f"""Analyze this website and determine its characteristics:
+
+Domain: {site_data['domain']}
+Base URL: {site_data['base_url']}
+
+Sample Page Titles:
+{chr(10).join(f"- {title}" for title in site_data['sample_titles'])}
+
+Sample URL Paths:
+{chr(10).join(f"- {url}" for url in site_data['sample_urls'])}
+
+Sample Descriptions:
+{chr(10).join(f"- {desc}" for desc in site_data['sample_descriptions'] if desc)}
+
+Return a JSON object with these characteristics:
+{{
+  "is_news_site": boolean,
+  "is_tech_site": boolean, 
+  "is_documentation_site": boolean,
+  "is_ecommerce_site": boolean,
+  "primary_content_type": "news|documentation|marketing|ecommerce|blog|corporate|other",
+  "has_subscription_content": boolean,
+  "content_patterns": ["list", "of", "identified", "patterns"],
+  "site_purpose": "brief description of main purpose"
+}}
+
+Base your analysis on the URL patterns, titles, and overall content structure."""
+                    }
+                ],
+                max_tokens=500,
+                temperature=0.1,
+                timeout=10
+            )
+            
+            result_text = response.choices[0].message.content.strip()
+            
+            # Extract JSON from response
+            if '{' in result_text:
+                json_start = result_text.find('{')
+                json_end = result_text.rfind('}') + 1
+                characteristics = json.loads(result_text[json_start:json_end])
+                
+                # Cache the result
+                self._site_characteristics = characteristics
+                print(f"AI determined site characteristics: {characteristics}")
+                return characteristics
+                
+        except Exception as e:
+            print(f"AI site characteristic analysis failed: {e}")
+            
+        # Fallback to heuristic analysis
+        return self._fallback_site_characteristics()
+    
+    def _fallback_site_characteristics(self) -> Dict[str, any]:
+        """Fallback method for determining site characteristics without AI"""
+        domain_lower = self.domain.lower()
+        
+        # Basic heuristic detection
+        is_news = any(word in domain_lower for word in ['news', 'times', 'post', 'cnn', 'bbc', 'fox', 'abc', 'cbs', 'nbc', 'reuters', 'ap'])
+        is_tech = any(word in domain_lower for word in ['docs', 'api', 'dev', 'github', 'stackoverflow', 'tech'])
+        is_docs = any(word in domain_lower for word in ['docs', 'documentation', 'wiki', 'help'])
+        is_ecommerce = any(word in domain_lower for word in ['shop', 'store', 'buy', 'cart', 'amazon', 'ebay'])
+        
+        characteristics = {
+            'is_news_site': is_news,
+            'is_tech_site': is_tech,
+            'is_documentation_site': is_docs,
+            'is_ecommerce_site': is_ecommerce,
+            'primary_content_type': 'news' if is_news else 'documentation' if is_docs else 'marketing' if is_ecommerce else 'other',
+            'has_subscription_content': is_news,  # News sites often have subscriptions
+            'content_patterns': [],
+            'site_purpose': f"Website focused on {is_news and 'news' or is_docs and 'documentation' or 'general content'}"
+        }
+        
+        self._site_characteristics = characteristics
+        return characteristics
+
 class LLMSTxtGenerator:
     def __init__(self, base_url: str, pages_data: List[Dict]):
         self.base_url = base_url
         self.pages_data = sorted(pages_data, key=lambda x: x['importance_score'], reverse=True)
         self.site_name = urlparse(base_url).netloc.replace('www.', '').replace('.com', '').replace('.org', '').title()
+        
+        # Try to extract site analysis if available from pages
+        self.site_analysis = None
+        for page in pages_data:
+            if hasattr(page, 'site_analysis'):
+                self.site_analysis = page.site_analysis
+                break
     
     def cleanup_with_openai(self, content: str, content_type: str = "summary") -> str:
         """Clean up content using OpenAI to improve readability and structure"""
@@ -419,81 +819,95 @@ Return only the improved section with the same simple link format."""
             return content  # Return original content if OpenAI fails
     
     def reorganize_sections_with_ai(self, sections: Dict) -> Dict:
-        """Use AI to reorganize sections based on content analysis"""
-        if not openai_client or len(sections) <= 2:
+        """Use AI to make minor refinements to sections if needed"""
+        # Since we're already using AI for initial categorization,
+        # we can skip additional reorganization for most cases
+        if not openai_client or len(sections) <= 3:
+            return sections
+            
+        # Only do reorganization if there are many small sections that could be merged
+        small_sections = [name for name, pages in sections.items() if len(pages) <= 2]
+        if len(small_sections) < 3:
             return sections
             
         try:
-            # Create a summary of all sections and their content
+            # Look for opportunities to merge small, related sections
             section_summary = ""
             for section_name, pages in sections.items():
-                if section_name in ['Subscription', 'About']:  # Keep these as-is
-                    continue
-                page_titles = [page['title'] for page in pages[:5]]  # Sample titles
-                section_summary += f"- {section_name}: {', '.join(page_titles)}\n"
+                if len(pages) <= 2:  # Only include small sections for potential merging
+                    page_titles = [page['title'] for page in pages]
+                    section_summary += f"- {section_name} ({len(pages)} pages): {', '.join(page_titles)}\n"
             
             if not section_summary.strip():
                 return sections
             
-            prompt = f"""Analyze these content sections and suggest better category names that reflect the actual content themes. Return ONLY a JSON mapping of old names to new names.
+            prompt = f"""Look at these small content sections and suggest if any should be merged into more meaningful categories. Only suggest merges if they make logical sense.
 
-Current sections:
+Small sections:
 {section_summary}
 
-Requirements:
-- Keep "Subscription" and "About" unchanged if they exist
-- Suggest 3-7 meaningful categories that reflect the actual content
-- Use clear, descriptive names (e.g. "Local Crime", "Breaking News", "Community Events")
-- Group similar content together
-- Return format: {{"old_name": "new_name", "old_name2": "new_name2"}}
+Return ONLY a JSON mapping for sections that should be merged. For example:
+{{"old_section1": "new_merged_name", "old_section2": "new_merged_name"}}
 
-JSON mapping:"""
+If no merging is needed, return empty JSON: {{}}"""
 
             response = openai_client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
-                    {"role": "system", "content": "You are an expert content categorization specialist. Analyze content and suggest meaningful, descriptive category names that reflect actual themes."},
+                    {"role": "system", "content": "You are an expert at organizing content. Only suggest merging sections if it creates a more logical, intuitive organization."},
                     {"role": "user", "content": prompt}
                 ],
-                max_tokens=300,
+                max_tokens=200,
                 temperature=0.1,
                 timeout=10
             )
             
             mapping_text = response.choices[0].message.content.strip()
-            # Extract JSON from response
-            import json
             if '{' in mapping_text:
                 json_start = mapping_text.find('{')
                 json_end = mapping_text.rfind('}') + 1
                 mapping = json.loads(mapping_text[json_start:json_end])
                 
-                # Apply the mapping
-                new_sections = {}
-                for old_name, pages in sections.items():
-                    new_name = mapping.get(old_name, old_name)
-                    if new_name in new_sections:
-                        new_sections[new_name].extend(pages)
-                    else:
-                        new_sections[new_name] = pages
-                
-                return new_sections
+                if mapping:  # Only apply if there are actual mappings
+                    new_sections = {}
+                    for old_name, pages in sections.items():
+                        new_name = mapping.get(old_name, old_name)
+                        if new_name in new_sections:
+                            new_sections[new_name].extend(pages)
+                        else:
+                            new_sections[new_name] = pages
+                    
+                    print(f"AI section refinement: merged {len(mapping)} sections")
+                    return new_sections
                 
         except Exception as e:
-            print(f"AI section reorganization failed: {e}")
+            print(f"AI section refinement failed: {e}")
             
         return sections
     
     def generate_summary(self) -> str:
-        # Simple summary based on most important pages
+        # Try to use AI analysis data if available
+        if hasattr(self, 'site_analysis') and self.site_analysis:
+            return self.site_analysis.site_summary
+        
+        # Check if pages have AI analysis data
+        ai_analyzed_pages = [p for p in self.pages_data if 'content_type' in p or 'ai_keywords' in p]
+        if ai_analyzed_pages and openai_client:
+            return self._generate_ai_summary_from_pages(ai_analyzed_pages)
+        
+        # Fallback to original logic
         top_pages = self.pages_data[:3]
         if not top_pages:
-            summary = f"A website providing information and resources."
+            summary = "A website providing information and resources."
         else:
             keywords = []
             for page in top_pages:
-                title_words = page['title'].lower().split()
-                keywords.extend([word for word in title_words if len(word) > 3])
+                # Use AI keywords if available, otherwise extract from title
+                if 'ai_keywords' in page and page['ai_keywords']:
+                    keywords.extend(page['ai_keywords'])
+                else:
+                    title_words = page['title'].lower().split()
+                    keywords.extend([word for word in title_words if len(word) > 3])
             
             # Get most common meaningful words
             from collections import Counter
@@ -503,8 +917,59 @@ JSON mapping:"""
             else:
                 summary = "A website providing information and resources."
         
-        # Clean up the summary with OpenAI
-        return self.cleanup_with_openai(summary, "summary")
+        # Clean up the summary with OpenAI if available
+        if openai_client:
+            return self.cleanup_with_openai(summary, "summary")
+        return summary
+    
+    def _generate_ai_summary_from_pages(self, pages: List[Dict]) -> str:
+        """Generate summary using AI analysis of pages"""
+        try:
+            # Gather AI analysis data
+            content_types = [p.get('content_type', 'other') for p in pages[:10]]
+            all_keywords = []
+            for page in pages[:10]:
+                if 'ai_keywords' in page and page['ai_keywords']:
+                    all_keywords.extend(page['ai_keywords'])
+            
+            # Get most common content types and keywords
+            from collections import Counter
+            type_counts = Counter(content_types)
+            keyword_counts = Counter(all_keywords)
+            
+            analysis_data = {
+                'domain': urlparse(self.base_url).netloc,
+                'main_content_types': type_counts.most_common(3),
+                'main_keywords': keyword_counts.most_common(5),
+                'total_pages': len(self.pages_data),
+                'sample_titles': [p['title'] for p in pages[:5]]
+            }
+            
+            response = openai_client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are an expert at creating concise, informative website summaries. Create a 2-3 sentence summary that clearly explains what the website offers."
+                    },
+                    {
+                        "role": "user",
+                        "content": f"""Create a summary for this website based on the analysis data:
+
+{json.dumps(analysis_data, indent=2)}
+
+The summary should be 2-3 sentences, explain the website's primary purpose, and be useful for someone trying to understand what the site offers."""
+                    }
+                ],
+                max_tokens=150,
+                temperature=0.3
+            )
+            
+            return response.choices[0].message.content.strip()
+            
+        except Exception as e:
+            print(f"AI summary generation failed: {e}")
+            return "A website providing information and resources."
     
     def generate_llms_txt(self) -> str:
         domain = urlparse(self.base_url).netloc
@@ -523,25 +988,20 @@ JSON mapping:"""
         # Use AI to reorganize sections based on actual content
         sections = self.reorganize_sections_with_ai(sections)
         
-        # Sort sections by importance - now dynamic based on AI reorganization
-        if any(site in self.base_url for site in ['nytimes.com', 'washingtonpost.com', 'cnn.com', 'bbc.com', 'reuters.com']):
-            # Major news site section order
-            section_order = ['News', 'Politics', 'Business', 'World News', 'Technology', 'Opinion', 'Sports', 'About', 'Subscription', 'General']
-        elif 'github.com' in self.base_url:
-            # GitHub site section order
-            section_order = ['Platform', 'Getting Started', 'Documentation', 'API Reference', 'Features', 'Tools', 'Marketplace', 'Pricing', 'Support', 'Legal', 'Account', 'General']
-        else:
-            # Dynamic ordering - put larger sections first, keep important ones at top
-            section_order = []
-            important_sections = ['Getting Started', 'Documentation', 'API Reference', 'About', 'Subscription']
-            for section in important_sections:
-                if section in sections:
-                    section_order.append(section)
+        # Dynamic section ordering based on content quality and importance
+        section_priority = []
+        for section_name, pages in sections.items():
+            # Calculate section priority based on average importance score and page count
+            avg_importance = sum(page['importance_score'] for page in pages) / len(pages) if pages else 0
+            important_page_count = len([p for p in pages if p['importance_score'] > 0.3])
             
-            # Add remaining sections by size (largest first)
-            remaining = [(name, len(pages)) for name, pages in sections.items() if name not in section_order]
-            remaining.sort(key=lambda x: x[1], reverse=True)
-            section_order.extend([name for name, _ in remaining])
+            # Priority score: weighted combination of average importance and important page count
+            priority_score = (avg_importance * 0.7) + (min(important_page_count / 10, 1.0) * 0.3)
+            section_priority.append((section_name, priority_score, important_page_count))
+        
+        # Sort sections by priority score (highest first), then by important page count
+        section_priority.sort(key=lambda x: (x[1], x[2]), reverse=True)
+        section_order = [name for name, _, _ in section_priority]
         
         for section_name in section_order:
             if section_name in sections:
@@ -570,96 +1030,8 @@ JSON mapping:"""
                     url = page['url']
                     description = page['description']
                     
-                    # Create a comprehensive description
-                    final_description = ""
-                    
-                    if description and len(description.strip()) > 10:
-                        # Clean up the existing description
-                        clean_desc = description.strip()
-                        # Remove common prefixes and suffixes
-                        clean_desc = clean_desc.replace("Learn more about ", "").replace("Documentation for ", "")
-                        if len(clean_desc) > 120:
-                            clean_desc = clean_desc[:117] + "..."
-                        final_description = clean_desc
-                    else:
-                        # Generate a meaningful description based on title, URL, and content
-                        url_parts = url.lower()
-                        title_lower = title.lower()
-                        content_start = page['content'][:300].lower() if page['content'] else ""
-                        
-                        # API-related pages
-                        if any(word in title_lower for word in ['api', 'endpoint', 'reference']):
-                            if 'authentication' in url_parts or 'auth' in title_lower:
-                                final_description = "API authentication and authorization methods"
-                            elif 'key' in title_lower:
-                                final_description = "API key management and configuration"
-                            elif any(word in title_lower for word in ['create', 'post', 'add']):
-                                final_description = "API endpoint for creating or adding resources"
-                            elif any(word in title_lower for word in ['get', 'retrieve', 'fetch']):
-                                final_description = "API endpoint for retrieving data and information"
-                            elif any(word in title_lower for word in ['update', 'modify', 'edit']):
-                                final_description = "API endpoint for updating and modifying resources"
-                            elif any(word in title_lower for word in ['delete', 'remove']):
-                                final_description = "API endpoint for deleting and removing resources"
-                            elif 'list' in title_lower:
-                                final_description = "API endpoint for listing and browsing resources"
-                            else:
-                                final_description = "API documentation and technical reference"
-                        
-                        # Documentation pages
-                        elif any(word in title_lower for word in ['guide', 'tutorial', 'how to', 'getting started']):
-                            if 'quick' in title_lower or 'start' in title_lower:
-                                final_description = "Quick start guide and initial setup instructions"
-                            elif 'install' in title_lower:
-                                final_description = "Installation and setup guide"
-                            else:
-                                final_description = "Step-by-step guide and tutorial information"
-                        
-                        # Example pages
-                        elif any(word in title_lower for word in ['example', 'sample', 'demo']):
-                            final_description = "Code examples and practical implementation samples"
-                        
-                        # Configuration pages
-                        elif any(word in title_lower for word in ['config', 'setting', 'option']):
-                            final_description = "Configuration options and settings documentation"
-                        
-                        # Error/troubleshooting pages
-                        elif any(word in title_lower for word in ['error', 'troubleshoot', 'debug', 'faq']):
-                            final_description = "Troubleshooting guide and common issues resolution"
-                        
-                        # Legal/policy pages
-                        elif any(word in title_lower for word in ['privacy', 'terms', 'policy', 'legal']):
-                            final_description = "Legal documentation and policy information"
-                        
-                        # Try to extract meaningful description from content
-                        elif page['content'] and len(page['content']) > 50:
-                            # Get first meaningful sentence from content
-                            content_sentences = page['content'].split('.')[:3]
-                            meaningful_content = []
-                            for sentence in content_sentences:
-                                sentence = sentence.strip()
-                                if len(sentence) > 20 and not sentence.startswith(('©', 'Copyright', 'All rights')):
-                                    meaningful_content.append(sentence)
-                                    if len(meaningful_content) >= 2:
-                                        break
-                            
-                            if meaningful_content:
-                                combined = '. '.join(meaningful_content)
-                                if len(combined) > 120:
-                                    combined = combined[:117] + "..."
-                                final_description = combined
-                            else:
-                                final_description = f"Information and documentation about {title.lower()}"
-                        
-                        # Final fallback
-                        else:
-                            final_description = f"Documentation and information about {title.lower()}"
-                    
-                    # Ensure description starts with capital letter and ends properly
-                    if final_description:
-                        final_description = final_description[0].upper() + final_description[1:]
-                        if not final_description.endswith(('.', '!', '?')):
-                            final_description += "."
+                    # Use AI-generated description if available, otherwise use intelligent fallback
+                    final_description = self._generate_page_description(page)
                     
                     section_content += f"- [{title}]({url}): {final_description}\n"
                 
@@ -723,6 +1095,166 @@ JSON mapping:"""
             content += "---\n\n"
         
         return content
+
+    def _generate_page_description(self, page: Dict) -> str:
+        """Generate an intelligent description for a page using AI analysis or smart fallbacks"""
+        
+        # First, try to use AI-generated description if available
+        if 'ai_description' in page and page['ai_description']:
+            return page['ai_description']
+        
+        # If we have AI analysis data, use it to create a better description
+        if 'content_type' in page and 'ai_keywords' in page:
+            return self._create_description_from_ai_data(page)
+        
+        # Use existing description if it's good quality
+        if page['description'] and len(page['description'].strip()) > 20:
+            return self._clean_existing_description(page['description'])
+        
+        # Generate description using AI if available
+        if openai_client:
+            return self._generate_description_with_ai(page)
+        
+        # Final fallback: create a basic description
+        return self._create_basic_description(page)
+    
+    def _create_description_from_ai_data(self, page: Dict) -> str:
+        """Create description using available AI analysis data"""
+        content_type = page.get('content_type', 'other')
+        keywords = page.get('ai_keywords', [])
+        title = page['title']
+        
+        # Use content type and keywords to create a meaningful description
+        if content_type == 'documentation':
+            if keywords:
+                return f"Documentation covering {', '.join(keywords[:3])} and related topics."
+            return f"Comprehensive documentation for {title.lower()}."
+        elif content_type == 'tutorial':
+            if keywords:
+                return f"Step-by-step tutorial guide for {', '.join(keywords[:2])}."
+            return f"Tutorial and learning guide for {title.lower()}."
+        elif content_type == 'reference':
+            if keywords:
+                return f"Technical reference for {', '.join(keywords[:3])}."
+            return f"Reference documentation and technical details."
+        elif content_type == 'news':
+            return f"News article covering {', '.join(keywords[:2])} and current events." if keywords else "Latest news and updates."
+        elif content_type == 'support':
+            return f"Support information and help resources for {', '.join(keywords[:2])}." if keywords else "Help and support resources."
+        elif content_type == 'legal':
+            return f"Legal documentation regarding {', '.join(keywords[:2])}." if keywords else "Legal terms and policy information."
+        else:
+            if keywords:
+                return f"Information about {', '.join(keywords[:3])}."
+            return f"Details about {title.lower()}."
+    
+    def _clean_existing_description(self, description: str) -> str:
+        """Clean and improve existing description"""
+        clean_desc = description.strip()
+        
+        # Remove common prefixes and suffixes
+        prefixes = ["Learn more about", "Documentation for", "Information about", "Details on"]
+        for prefix in prefixes:
+            if clean_desc.startswith(prefix):
+                clean_desc = clean_desc[len(prefix):].strip()
+        
+        # Smart truncation - prefer complete sentences
+        if len(clean_desc) > 150:
+            sentences = clean_desc.split('. ')
+            if len(sentences) > 1 and len(sentences[0]) < 120:
+                clean_desc = sentences[0]
+                if not clean_desc.endswith('.'):
+                    clean_desc += '.'
+            else:
+                words = clean_desc[:140].split(' ')
+                clean_desc = ' '.join(words[:-1])
+                if not clean_desc.endswith('.'):
+                    clean_desc += '.'
+        
+        # Ensure proper capitalization and punctuation
+        if clean_desc:
+            clean_desc = clean_desc[0].upper() + clean_desc[1:]
+            if not clean_desc.endswith(('.', '!', '?')):
+                clean_desc += '.'
+        
+        return clean_desc
+    
+    def _generate_description_with_ai(self, page: Dict) -> str:
+        """Generate description using AI for pages without existing analysis"""
+        if not openai_client:
+            return self._create_basic_description(page)
+        
+        try:
+            page_data = {
+                'title': page['title'][:80],
+                'url_path': page['url'].replace(self.base_url, '').strip('/'),
+                'description': page['description'][:150] if page['description'] else '',
+                'content_preview': page['content'][:400] if page['content'] else '',
+                'content_length': page['content_length']
+            }
+            
+            response = openai_client.beta.chat.completions.parse(
+                model="gpt-4o-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are an expert at creating concise, informative descriptions for web pages. Create clear, useful descriptions that help users understand what each page offers."
+                    },
+                    {
+                        "role": "user",
+                        "content": f"""Create a brief, informative description for this web page:
+
+{json.dumps(page_data, indent=2)}
+
+The description should be 1-2 sentences, clearly explain what the page offers, and be useful for someone trying to understand the page's purpose."""
+                    }
+                ],
+                response_format=PageAnalysis,
+                max_tokens=200,
+                temperature=0.3
+            )
+            
+            return response.choices[0].message.parsed.description
+            
+        except Exception as e:
+            print(f"AI description generation failed for {page['title']}: {e}")
+            return self._create_basic_description(page)
+    
+    def _create_basic_description(self, page: Dict) -> str:
+        """Create a basic description as final fallback"""
+        title = page['title']
+        url = page['url']
+        
+        # Try to extract useful info from URL path
+        url_path = url.replace(self.base_url, '').strip('/').lower()
+        
+        # Look for meaningful patterns in title and URL
+        if any(word in title.lower() for word in ['getting started', 'quickstart', 'setup']):
+            return "Getting started guide and initial setup information."
+        elif any(word in title.lower() for word in ['api', 'reference']):
+            return "API documentation and technical reference."
+        elif any(word in title.lower() for word in ['tutorial', 'guide', 'how to']):
+            return "Tutorial and step-by-step guidance."
+        elif any(word in title.lower() for word in ['faq', 'help', 'support']):
+            return "Help documentation and support resources."
+        elif any(word in url_path for word in ['about', 'contact']):
+            return "Information about the organization and contact details."
+        elif any(word in url_path for word in ['pricing', 'plans']):
+            return "Pricing information and service plans."
+        else:
+            # Extract meaningful content from page if available
+            if page['content'] and len(page['content']) > 100:
+                # Get first meaningful sentence
+                sentences = page['content'].split('.')[:3]
+                for sentence in sentences:
+                    sentence = sentence.strip()
+                    if len(sentence) > 30 and not sentence.startswith(('©', 'Copyright', 'All rights')):
+                        if len(sentence) > 140:
+                            words = sentence[:130].split(' ')
+                            sentence = ' '.join(words[:-1]) + '.'
+                        return sentence
+            
+            return f"Information and resources about {title.lower()}."
 
 @app.get("/")
 async def root():
@@ -805,6 +1337,11 @@ async def generate_llms_txt(request: CrawlRequest):
         ai_enhanced = openai_client is not None
         ai_model = 'gpt-4o-mini' if ai_enhanced else None
         
+        # Get site characteristics for debugging/verification
+        site_characteristics = None
+        if crawler._site_characteristics:
+            site_characteristics = crawler._site_characteristics
+        
         return LLMSTxtResponse(
             llms_txt=llms_txt,
             llms_full_txt=llms_full_txt,
@@ -812,11 +1349,19 @@ async def generate_llms_txt(request: CrawlRequest):
             generation_time=generation_time,
             ai_enhanced=ai_enhanced,
             ai_model=ai_model,
-            used_existing=False
+            used_existing=False,
+            site_characteristics=site_characteristics
         )
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating llms.txt: {str(e)}")
+        # Log the full error for debugging
+        import traceback
+        print(f"ERROR in generate_llms_txt: {type(e).__name__}: {str(e)}")
+        print(f"Full traceback:\n{traceback.format_exc()}")
+        
+        # Provide a more informative error message
+        error_message = str(e) if str(e) else f"{type(e).__name__} occurred"
+        raise HTTPException(status_code=500, detail=f"Error generating llms.txt: {error_message}")
 
 @app.get("/health")
 async def health_check():

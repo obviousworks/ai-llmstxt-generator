@@ -50,7 +50,7 @@ echo "🚀 Starting services..."
 echo "🔧 Starting backend server..."
 cd backend
 source venv/bin/activate
-python main.py &
+python3 run_dev.py &
 BACKEND_PID=$!
 cd ..
 

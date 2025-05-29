@@ -55,6 +55,19 @@ const getApiUrl = () => {
 
 const API_URL = getApiUrl()
 
+// Helper function to normalize URLs
+const normalizeUrl = (inputUrl: string): string => {
+  const trimmed = inputUrl.trim()
+  
+  // If it already has a protocol, return as-is
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed
+  }
+  
+  // Add https:// prefix for URLs without protocol
+  return `https://${trimmed}`
+}
+
 export default function Home() {
   const [url, setUrl] = useState('')
   const [maxPages, setMaxPages] = useState(20)
@@ -70,12 +83,17 @@ export default function Home() {
     setResult(null)
 
     try {
+      // Normalize the URL to ensure it has a protocol
+      const normalizedUrl = normalizeUrl(url)
+      
       // Use different endpoints for development vs production
       const endpoint = API_URL === 'http://localhost:8000' ? '/generate' : '/api/generate'
       const fullUrl = `${API_URL}${endpoint}`
       
       console.log('API_URL:', API_URL)
       console.log('Full URL:', fullUrl)
+      console.log('Original URL:', url)
+      console.log('Normalized URL:', normalizedUrl)
       console.log('Current location:', window.location.href)
       
       const response = await fetch(fullUrl, {
@@ -84,7 +102,7 @@ export default function Home() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          url: url,
+          url: normalizedUrl,
           max_pages: maxPages,
           depth_limit: 3
         }),
@@ -103,7 +121,16 @@ export default function Home() {
         } catch {
           throw new Error(`Server returned ${response.status}: ${responseText.substring(0, 100)}`)
         }
-        throw new Error(errorData.error || 'Failed to generate llms.txt')
+        
+        // Extract more helpful error message from Pydantic validation errors
+        if (errorData.detail && Array.isArray(errorData.detail)) {
+          const urlError = errorData.detail.find((err: any) => err.loc?.includes('url'))
+          if (urlError) {
+            throw new Error(`Invalid URL format: ${urlError.msg}. Please enter a valid URL like https://example.com`)
+          }
+        }
+        
+        throw new Error(errorData.error || errorData.detail || 'Failed to generate llms.txt')
       }
 
       const data: GenerationResult = JSON.parse(responseText)
@@ -172,7 +199,7 @@ export default function Home() {
                       id="url"
                       value={url}
                       onChange={(e) => setUrl(e.target.value)}
-                      placeholder="Enter website URL (e.g., https://docs.anthropic.com)"
+                      placeholder="Enter website URL (e.g., docs.anthropic.com or https://docs.anthropic.com)"
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-700 placeholder:text-gray-700 text-gray-900"
                       disabled={isLoading}
                     />

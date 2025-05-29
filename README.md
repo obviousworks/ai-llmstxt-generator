@@ -2,7 +2,42 @@
 
 An intelligent web application that generates `llms.txt` files for websites and automatically monitors them for changes. This tool follows the [llms.txt specification](https://llmstxt.org/) to create AI-friendly documentation files that help Large Language Models better understand website content.
 
-## 🚀 Features
+## 🆕 Improved Documentation Structure
+
+This README has been restructured for better user experience:
+- **📋 Grouped sections**: Related topics are now organized together
+- **🎬 Quick Demo**: Try it in 30 seconds with visual examples
+- **🚀 Progressive flow**: Getting Started → Architecture → Advanced Topics
+- **🔧 Consolidated config**: All settings in one comprehensive section
+- **📚 Better navigation**: Grouped table of contents for easier browsing
+
+## 📋 Table of Contents
+
+### 🚀 Getting Started
+- [✨ Features](#-features)
+- [🎬 Quick Demo](#-quick-demo)
+- [🛠 Technology Stack](#-technology-stack)
+- [📦 Installation & Setup](#-installation--setup)
+- [🎯 Usage](#-usage)
+
+### 🏗️ Architecture & Setup  
+- [📁 Project Structure](#-project-structure)
+- [🔧 Configuration](#-configuration)
+- [🚢 Deployment](#-deployment)
+- [⏰ Automated Monitoring Setup](#-automated-monitoring-setup)
+
+### 📚 Advanced Topics
+- [📊 Understanding Change Detection](#-understanding-change-detection)
+- [⚡ Performance & Scaling](#-performance--scaling)
+- [🧪 Testing](#-testing)
+- [🐛 Troubleshooting](#-troubleshooting)
+
+### 🤝 Community
+- [🚀 Future Enhancements](#-future-enhancements)
+- [🤝 Contributing](#-contributing)
+- [📋 Quick Reference](#-quick-reference)
+
+## ✨ Features
 
 ### Core Generation
 - **Intelligent Website Crawling**: Automatically discovers and analyzes website pages
@@ -23,6 +58,40 @@ An intelligent web application that generates `llms.txt` files for websites and 
 - **Real-time Progress**: Live feedback during crawling and generation
 - **Monitoring Dashboard**: Comprehensive interface for managing automated updates
 - **Instant Downloads**: Direct download of generated files
+
+## 🎬 Quick Demo
+
+### Try It in 30 Seconds
+```bash
+# Clone and start (automated setup)
+git clone <your-repo-url> && cd llm_txt_creator
+./start.sh
+
+# Open browser to http://localhost:3000
+# Enter a website URL (e.g., https://docs.anthropic.com)
+# Click "Generate llms.txt" and watch the magic! ✨
+```
+
+### What You'll See
+1. **Real-time crawling**: Pages discovered and analyzed live
+2. **AI enhancement**: Content improved and categorized automatically  
+3. **Dual outputs**: Both curated and comprehensive versions
+4. **Monitoring setup**: Add sites for automatic updates
+
+### Example Output
+```
+# Anthropic Documentation
+> AI safety company building reliable, interpretable, and steerable AI systems
+
+## Getting Started
+- Quickstart Guide - Essential setup and first API calls
+- Authentication - API key setup and security best practices
+
+## API Reference  
+- Messages API - Core conversational AI interface
+- Streaming - Real-time response handling
+...
+```
 
 ## 🛠 Technology Stack
 
@@ -254,7 +323,7 @@ curl -X POST "https://your-app.vercel.app/api/scheduler" \
 
 #### Required Setup
 ```env
-# For local development
+# For local development (.env)
 NEXT_PUBLIC_API_URL=http://localhost:8000
 
 # OpenAI API key for AI enhancement (required)
@@ -267,14 +336,14 @@ OPENAI_API_KEY=your_openai_api_key_here
 # NEXT_PUBLIC_API_URL automatically detected
 ```
 
-### Crawler Configuration
+### Application Settings
 
+#### Crawler Configuration
 - `max_pages`: Maximum number of pages to crawl (default: 20)
 - `depth_limit`: Maximum crawl depth from the root URL (default: 3)
 - `check_interval`: Monitoring interval in seconds (default: 86400 = 24 hours)
 
-### AI Enhancement Features
-
+#### AI Enhancement Features
 When OpenAI API key is provided:
 - **Enhanced Descriptions**: AI-improved page descriptions
 - **Smart Categorization**: Dynamic section organization
@@ -283,55 +352,55 @@ When OpenAI API key is provided:
 
 ### Monitoring Best Practices
 
-**Site Selection:**
+#### Site Selection
 - **Documentation sites**: Perfect for monitoring (docs.*, developers.*)
 - **News sites**: Good for content updates (moderate frequency)
 - **Large sites**: Use smaller page limits (10-20 pages)
 
-**Interval Recommendations:**
+#### Interval Recommendations
 - **Critical docs**: Every 6-12 hours
 - **Regular updates**: Daily (24 hours) - **Recommended**
 - **Stable sites**: Every 3 days
 - **Archive sites**: Weekly
 
+#### Performance Optimization
+- **Small crawls (≤20 pages)**: Full AI enhancement
+- **Medium crawls (21-50 pages)**: AI with 8 pages max per section
+- **Large crawls (51-100 pages)**: AI limited to 5 pages per section
+- **Very large crawls (>100 pages)**: No AI enhancement (prevents timeouts)
+
 ## 🚢 Deployment
 
-### Deploy to Vercel (Recommended)
+### Production Deployment with Vercel
 
-**Option A: Use the automated deployment script (Recommended)**
+The project includes automated deployment to Vercel with cron job scheduling.
+
+**Quick Deploy:**
 ```bash
 ./deploy-vercel.sh
 ```
 
-This script automatically:
-- Validates all required files (API functions, dependencies, config)
-- Builds the Next.js application
-- Deploys to Vercel with serverless functions
-- Provides deployment URL and testing instructions
-- Includes comprehensive error handling and validation
+**Manual Deploy:**
+```bash
+# Login to Vercel
+vercel login
 
-**Option B: Manual deployment**
+# Deploy to production
+vercel --prod
+```
 
-1. **Install Vercel CLI**
-   ```bash
-   npm install -g vercel
-   ```
+**⚠️ Important Notes:**
+- **Vercel Free Plan**: Function timeout limited to 60 seconds max, **cron jobs limited to daily frequency**
+- **Vercel Pro Plan**: Function timeout can be up to 300 seconds, **unlimited cron frequency** 
+- For large websites (>50 pages), consider upgrading to Pro plan or use local development
+- **Free plan**: Cron jobs run daily at 12:00 PM UTC
+- **Pro plan**: Can run every 6 hours or any custom schedule
 
-2. **Login and Deploy**
-   ```bash
-   vercel login
-   vercel --prod
-   ```
-
-3. **Set Environment Variables**
-   - Go to Vercel Dashboard → Project Settings → Environment Variables
-   - Add `OPENAI_API_KEY` with your API key
-   - Redeploy the application
-
-4. **Automatic Features Enabled:**
-   - ✅ Cron jobs run every 6 hours
-   - ✅ Auto-scaling based on traffic
-   - ✅ Serverless function optimization
+**Environment Variables Required:**
+```bash
+# Set in Vercel dashboard or via CLI
+vercel env add OPENAI_API_KEY
+```
 
 ### Vercel Configuration
 
@@ -419,17 +488,17 @@ open https://your-app.vercel.app/monitor
 - **Memory**: Up to 1024MB
 - **Payload Size**: 4.5MB request/response limit
 
-### Smart Performance Optimization
-- **Small crawls (≤20 pages)**: Full AI enhancement
-- **Medium crawls (21-50 pages)**: AI with 8 pages max per section
-- **Large crawls (51-100 pages)**: AI limited to 5 pages per section
-- **Very large crawls (>100 pages)**: No AI enhancement (prevents timeouts)
-
 ### Monitoring Efficiency
 - **Concurrent checks**: System handles multiple sites efficiently
 - **Smart scheduling**: Only checks sites when intervals are due
 - **Change thresholds**: Prevents unnecessary regeneration
 - **Timeout management**: Graceful degradation for large sites
+
+### Scaling Tips
+- **Use appropriate page limits**: See [Configuration](#-configuration) for recommendations
+- **Monitor function execution times**: Check Vercel dashboard for performance metrics
+- **Consider Pro plan**: For larger sites requiring longer execution times
+- **Batch monitoring**: System automatically batches multiple site checks efficiently
 
 ## 🐛 Troubleshooting
 
@@ -548,4 +617,204 @@ OPENAI_API_KEY=your_openai_api_key_here
 OPENAI_API_KEY=your_openai_api_key_here
 ```
 
-Built with ❤️ for the llms.txt standard and automated monitoring! 
+## ⏰ Automated Monitoring Setup
+
+### Production Setup (Vercel) - Automatic
+
+**Good News**: Cron jobs are automatically configured when you deploy to Vercel! 🎉
+
+1. **Deploy to Vercel** (using either method above)
+   ```bash
+   ./deploy-vercel.sh  # or vercel --prod
+   ```
+
+2. **Cron jobs are automatically enabled:**
+   - ✅ **Free Plan**: Runs daily at 12:00 PM UTC (`0 12 * * *`)
+   - ✅ **Pro Plan**: Can run every 6 hours (`0 */6 * * *`) or custom schedule
+   - ✅ Checks all monitored sites for changes
+   - ✅ Updates llms.txt files when significant changes detected
+   - ✅ 60-second execution limit (Free) or 300+ seconds (Pro)
+
+3. **Verify cron is working:**
+   ```bash
+   # Check cron endpoint manually
+   curl https://your-app.vercel.app/api/cron
+   
+   # Check Vercel dashboard
+   # Go to: Project → Functions → View function logs
+   ```
+
+4. **Monitor cron activity:**
+   - Visit your app's `/monitor` page
+   - Check "Last Update" timestamps
+   - Look for "Auto-updated" entries in the monitoring dashboard
+
+### Local Development Setup
+
+For local development, you can simulate cron behavior:
+
+**Option A: Manual cron trigger**
+```bash
+# Trigger cron check manually
+curl http://localhost:8001/cron
+
+# Or visit in browser
+open http://localhost:8001/cron
+```
+
+**Option B: Set up local cron (macOS/Linux)**
+```bash
+# Edit your crontab
+crontab -e
+
+# Add this line to run every hour during development
+0 * * * * curl -s http://localhost:8001/cron >/dev/null 2>&1
+
+# Or every 6 hours to match production
+0 */6 * * * curl -s http://localhost:8001/cron >/dev/null 2>&1
+```
+
+**Option C: Use a cron service**
+```bash
+# Install a cron alternative like 'node-cron' for local development
+npm install node-cron
+
+# Create a simple Node.js script for local cron
+cat > local-cron.js << 'EOF'
+const cron = require('node-cron');
+const fetch = require('node-fetch');
+
+// Run every 6 hours
+cron.schedule('0 */6 * * *', async () => {
+  try {
+    const response = await fetch('http://localhost:8001/cron');
+    console.log(`Cron job completed: ${response.status}`);
+  } catch (error) {
+    console.error('Cron job failed:', error);
+  }
+});
+
+console.log('Local cron scheduler started...');
+EOF
+
+# Run the local cron scheduler
+node local-cron.js
+```
+
+### Understanding Cron Schedule
+
+**Vercel Free Plan Schedule: `0 12 * * *`**
+```
+┌───────────── minute (0)
+│ ┌─────────── hour (12 = 12:00 PM UTC)
+│ │ ┌───────── day of month (*)
+│ │ │ ┌─────── month (*)
+│ │ │ │ ┌───── day of week (*)
+│ │ │ │ │
+│ │ │ │ │
+0 12 * * *
+```
+
+**This means:**
+- **12:00 PM UTC daily** (4 AM or 5 AM Pacific, depending on DST)
+
+**Vercel Pro Plan Schedule: `0 */6 * * *`**
+```
+┌───────────── minute (0)
+│ ┌─────────── hour (*/6 = every 6 hours)
+│ │ ┌───────── day of month (*)
+│ │ │ ┌─────── month (*)
+│ │ │ │ ┌───── day of week (*)
+│ │ │ │ │
+│ │ │ │ │
+0 */6 * * *
+```
+
+**This means:**
+- **12:00 AM UTC** (4 PM or 5 PM Pacific, depending on DST)
+- **6:00 AM UTC** (10 PM or 11 PM Pacific)
+- **12:00 PM UTC** (4 AM or 5 AM Pacific)
+- **6:00 PM UTC** (10 AM or 11 AM Pacific)
+
+### Customizing Cron Schedule
+
+⚠️ **Vercel Plan Limitations:**
+- **Free (Hobby) Plan**: Only daily schedules allowed (e.g., `0 12 * * *`)
+- **Pro Plan**: Any schedule frequency supported
+
+To change the monitoring frequency, edit `vercel.json`:
+
+```json
+{
+  "crons": [
+    {
+      "path": "/api/cron",
+      "schedule": "0 0 * * *"    // Daily at midnight UTC (Free plan compatible)
+    }
+  ]
+}
+```
+
+**Free plan compatible schedules:**
+- `0 0 * * *` - Daily at midnight UTC
+- `0 12 * * *` - Daily at noon UTC (default)
+- `0 6 * * *` - Daily at 6 AM UTC
+- `0 0 * * 1` - Weekly on Mondays
+
+**Pro plan additional schedules:**
+- `0 */1 * * *` - Every hour
+- `0 */2 * * *` - Every 2 hours  
+- `0 */6 * * *` - Every 6 hours
+- `0 */12 * * *` - Every 12 hours
+
+**After changing the schedule:**
+```bash
+# Redeploy to apply changes
+vercel --prod
+```
+
+### Troubleshooting Cron Jobs
+
+**Cron not running:**
+```bash
+# 1. Check if cron endpoint works manually
+curl https://your-app.vercel.app/api/cron
+
+# 2. Check Vercel function logs
+# Visit Vercel Dashboard → Project → Functions → api/cron.py
+
+# 3. Verify vercel.json syntax
+cat vercel.json | python -m json.tool
+```
+
+**No sites being checked:**
+- Make sure you've added sites to monitoring via `/monitor` page
+- Check that sites have valid URLs (include https://)
+- Verify OpenAI API key is set in Vercel environment variables
+
+**Cron running but not updating:**
+- Changes might be below 5% threshold (prevents noise)
+- Check the specific site manually: force update via `/monitor` page
+- Look at function logs for error messages
+
+### Monitoring Cron Activity
+
+**In the app:**
+1. Visit `/monitor` page
+2. Look for "Last Update" column
+3. Check for recent timestamps
+4. Look for "Auto-updated" vs "Manual" in update history
+
+**In Vercel Dashboard:**
+1. Go to your project
+2. Click "Functions" tab
+3. Click on `api/cron.py`
+4. View execution logs and duration
+
+**Expected behavior:**
+- Cron runs every 6 hours
+- Only updates sites with significant changes (5%+)
+- Updates multiple sites efficiently in single execution
+- Completes within 15-minute timeout limit 
+
+Built with ❤️ for the llms.txt standard and automated monitoring!
