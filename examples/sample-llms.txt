@@ -1,0 +1,46 @@
+# FastAPI
+
+> A platform providing FastAPI, modern, web and related resources.
+
+Key information available on this site:
+
+- FastAPI - modern, fast (high-performance), web framework for building APIs with Python 3.7+ based on standard Python type hints.
+- Learn - Step by step tutorials, featuring all the features, from beginner to advanced.
+- User Guide - The user guide has all you need to know to use FastAPI.
+- Reference - Technical reference, API, parameters, body, etc.
+- Deployment - Several easy ways to deploy your FastAPI application.
+
+## Getting Started
+
+- [FastAPI](https://fastapi.tiangolo.com/): FastAPI framework, high performance, easy to learn, fast to code, ready for production
+- [Tutorial - User Guide](https://fastapi.tiangolo.com/tutorial/): Learn how to use FastAPI with tutorials covering most of its features.
+- [Tutorial - User Guide - Intro](https://fastapi.tiangolo.com/tutorial/first-steps/): FastAPI is a modern, fast (high-performance), web framework for building APIs with Python 3.7+ based on standard Python type hints.
+- [Features](https://fastapi.tiangolo.com/features/): Information about fastapi features
+- [Python Types Intro](https://fastapi.tiangolo.com/python-types/): Information about python types intro
+
+## Documentation
+
+- [User Guide](https://fastapi.tiangolo.com/tutorial/): The user guide has all you need to know to use FastAPI.
+- [Advanced User Guide](https://fastapi.tiangolo.com/advanced/): Information about advanced user guide
+- [Tutorial - User Guide - Intro](https://fastapi.tiangolo.com/tutorial/first-steps/): FastAPI is a modern, fast (high-performance), web framework for building APIs with Python 3.7+ based on standard Python type hints.
+- [Deployment](https://fastapi.tiangolo.com/deployment/): Several easy ways to deploy your FastAPI application.
+
+## API Reference
+
+- [Reference - Code API](https://fastapi.tiangolo.com/reference/): Technical reference, API, parameters, body, etc.
+
+## Examples
+
+- [Project Generation - Template](https://fastapi.tiangolo.com/project-generation/): Information about project generation template
+
+## Support
+
+- [Help FastAPI - Get Help](https://fastapi.tiangolo.com/help/): Information about help fastapi get help
+- [Contributing](https://fastapi.tiangolo.com/contributing/): Information about contributing
+
+## General
+
+- [Release Notes](https://fastapi.tiangolo.com/release-notes/): Information about release notes
+- [External Links and Articles](https://fastapi.tiangolo.com/external-links/): Information about external links and articles
+- [Newsletter](https://fastapi.tiangolo.com/newsletter/): Information about newsletter
+- [About the author](https://fastapi.tiangolo.com/about/): Information about about the author 

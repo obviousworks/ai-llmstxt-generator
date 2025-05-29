@@ -1,0 +1,12 @@
+{
+  "routes": [
+    {
+      "src": "/api/generate",
+      "dest": "/api/generate.py"
+    },
+    {
+      "src": "/api/health",
+      "dest": "/api/health.py"
+    }
+  ]
+} 
