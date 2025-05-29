@@ -9,6 +9,7 @@ An automated tool that generates `llms.txt` files for websites by analyzing thei
 - **Section Categorization**: Automatically organizes content into logical sections
 - **Dual File Generation**: Creates both `llms.txt` (curated) and `llms-full.txt` (comprehensive)
 - **Modern Web Interface**: Beautiful, responsive UI built with Next.js and Tailwind CSS
+- **Serverless Backend**: Python functions deployed on Vercel for scalable processing
 - **Real-time Progress**: Live feedback during crawling and generation
 - **Instant Downloads**: Direct download of generated files
 
@@ -21,17 +22,17 @@ An automated tool that generates `llms.txt` files for websites by analyzing thei
 - **Lucide React** - Beautiful icons
 
 ### Backend
-- **FastAPI** - High-performance Python API
+- **Vercel Functions** - Serverless Python functions
 - **aiohttp** - Async HTTP client for web crawling
 - **BeautifulSoup4** - HTML parsing and content extraction
-- **Pydantic** - Data validation and serialization
 
 ## 📦 Installation & Setup
 
 ### Prerequisites
 - **Node.js 18+** (for frontend)
-- **Python 3.8+** (for backend)
+- **Python 3.9+** (for local backend development)
 - **npm or yarn** (package manager)
+- **Vercel CLI** (for deployment)
 
 ### Quick Start
 
@@ -41,21 +42,33 @@ An automated tool that generates `llms.txt` files for websites by analyzing thei
    cd llm-txt-generator
    ```
 
-2. **Set up the backend**
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Start local development (recommended)**
+   
+   **Use the automated start script:**
+   ```bash
+   ./start.sh
+   ```
+   This script automatically:
+   - Sets up Python virtual environment
+   - Installs backend dependencies  
+   - Starts both backend (port 8000) and frontend (port 3000)
+   
+   **Manual setup (alternative):**
+   
+   Set up local backend:
    ```bash
    cd backend
    python3 -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    pip install -r requirements.txt
    ```
-
-3. **Set up the frontend**
-   ```bash
-   cd ..  # Back to project root
-   npm install
-   ```
-
-4. **Start both services**
+   
+   Start services in separate terminals:
    
    Terminal 1 (Backend):
    ```bash
@@ -69,7 +82,7 @@ An automated tool that generates `llms.txt` files for websites by analyzing thei
    npm run dev
    ```
 
-5. **Open your browser**
+4. **Open your browser**
    Navigate to `http://localhost:3000`
 
 ## 🎯 Usage
@@ -82,12 +95,26 @@ An automated tool that generates `llms.txt` files for websites by analyzing thei
 4. **Download Results**: Download both `llms.txt` and `llms-full.txt` files
 5. **Review Analysis**: View the pages analyzed and their importance scores
 
-### API Usage
+### API Usage (Local Development)
 
-The backend provides a REST API for programmatic access:
+For local development, the backend provides a REST API:
 
 ```bash
 curl -X POST "http://localhost:8000/generate" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://example.com",
+    "max_pages": 20,
+    "depth_limit": 3
+  }'
+```
+
+### API Usage (Production)
+
+In production, the API is available as Vercel functions:
+
+```bash
+curl -X POST "https://your-app.vercel.app/api/generate" \
   -H "Content-Type: application/json" \
   -d '{
     "url": "https://example.com",
@@ -117,7 +144,7 @@ curl -X POST "http://localhost:8000/generate" \
 
 ## 🔧 Configuration
 
-### Backend Configuration
+### Crawler Configuration
 
 The crawler can be configured through the API request:
 
@@ -142,113 +169,121 @@ Content is automatically categorized into:
 - **Support** - FAQ, help, and support pages
 - **General** - Other content
 
-## 🚢 Deployment
+## 🚢 Quick Deployment
 
-### Frontend Deployment (Vercel)
+### Deploy to Vercel (recommended)
 
-1. **Connect to GitHub**
+**Use the automated deployment script:**
+```bash
+./deploy-vercel.sh
+```
+
+This script automatically:
+- Validates all required files (API functions, dependencies, config)
+- Builds the Next.js application
+- Deploys to Vercel with serverless functions
+- Provides deployment URL and testing instructions
+
+### Manual Deployment (alternative)
+
+If you prefer manual deployment to Vercel:
+
+1. **Install Vercel CLI**
    ```bash
-   npm run build  # Test local build
+   npm install -g vercel
    ```
 
-2. **Deploy to Vercel**
-   - Connect your GitHub repository to Vercel
-   - Set build command: `npm run build`
-   - Set output directory: `out` (if using static export)
-
-3. **Environment Variables**
-   - Set `NEXT_PUBLIC_API_URL` to your backend URL
-
-### Backend Deployment (Railway/Fly.io)
-
-1. **Prepare for deployment**
+2. **Login to Vercel**
    ```bash
-   cd backend
-   echo "web: uvicorn main:app --host 0.0.0.0 --port \$PORT" > Procfile
+   vercel login
    ```
 
-2. **Deploy to Railway**
-   - Connect your GitHub repository
-   - Railway will auto-detect Python and install dependencies
-   - Set start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
-
-3. **Deploy to Fly.io**
+3. **Deploy**
    ```bash
-   fly auth login
-   fly launch
-   fly deploy
+   vercel --prod
    ```
 
-### Docker Deployment
+### Environment Variables
 
-1. **Backend Dockerfile**
-   ```dockerfile
-   FROM python:3.11-slim
-   WORKDIR /app
-   COPY requirements.txt .
-   RUN pip install -r requirements.txt
-   COPY . .
-   EXPOSE 8000
-   CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
-   ```
+For production deployment, no environment variables are required as the frontend automatically detects the deployment environment and uses relative API paths.
 
-2. **Frontend Dockerfile**
-   ```dockerfile
-   FROM node:18-alpine
-   WORKDIR /app
-   COPY package*.json ./
-   RUN npm install
-   COPY . .
-   RUN npm run build
-   EXPOSE 3000
-   CMD ["npm", "start"]
-   ```
+For custom configurations, you can set:
+- `NEXT_PUBLIC_API_URL`: Override the default API URL detection
 
-3. **Docker Compose**
-   ```yaml
-   version: '3.8'
-   services:
-     backend:
-       build: ./backend
-       ports:
-         - "8000:8000"
-     frontend:
-       build: .
-       ports:
-         - "3000:3000"
-       environment:
-         - NEXT_PUBLIC_API_URL=http://localhost:8000
-   ```
+## 🛠 Deployment Scripts
 
-## 📁 Project Structure
+The project includes two automated scripts to streamline development and deployment:
+
+### 1. Local Development Script (`start.sh`)
+```bash
+./start.sh
+```
+
+**What it does:**
+- Creates and activates Python virtual environment
+- Installs all backend dependencies from `requirements.txt`
+- Starts FastAPI backend server on port 8000
+- Starts Next.js development server on port 3000
+- Provides clear status messages and error handling
+
+**Perfect for:**
+- First-time setup
+- Daily development workflow
+- Testing changes locally
+
+### 2. Vercel Deployment Script (`deploy-vercel.sh`)
+```bash
+./deploy-vercel.sh
+```
+
+**What it does:**
+- Validates all required files exist (API functions, dependencies, config)
+- Runs `npm run build` to build the Next.js application
+- Executes `vercel --prod` to deploy to production
+- Provides deployment URL and testing instructions
+- Includes error handling and validation checks
+
+**Perfect for:**
+- Production deployments
+- CI/CD pipelines
+- Ensuring consistent deployments
+
+## �� Project Structure
 
 ```
 llm-txt-generator/
 ├── src/                    # Next.js frontend
 │   └── app/
 │       └── page.tsx       # Main UI component
-├── backend/               # FastAPI backend
-│   ├── main.py           # API server and core logic
-│   ├── requirements.txt  # Python dependencies
-│   └── venv/            # Virtual environment
-├── package.json          # Frontend dependencies
-├── tailwind.config.js    # Tailwind configuration
-├── next.config.js        # Next.js configuration
-└── README.md            # This file
+├── api/                   # Vercel serverless functions
+│   ├── generate.py       # Main crawling and generation logic
+│   └── health.py         # Health check endpoint
+├── backend/              # Local development backend
+│   ├── main.py          # FastAPI server (for local dev)
+│   ├── requirements.txt # Python dependencies
+│   └── venv/           # Virtual environment
+├── start.sh             # Local development startup script
+├── deploy-vercel.sh     # Vercel deployment script
+├── requirements.txt     # Vercel functions dependencies
+├── vercel.json         # Vercel configuration
+├── package.json        # Frontend dependencies
+├── tailwind.config.js  # Tailwind configuration
+├── next.config.ts      # Next.js configuration
+└── README.md          # This file
 ```
 
 ## 🧪 Testing
 
-### Test the Backend
+### Test Local Backend
 ```bash
 cd backend
 source venv/bin/activate
-python -m pytest tests/  # If you add tests
+curl http://localhost:8000/health
 ```
 
-### Test the Frontend
+### Test Vercel Functions (after deployment)
 ```bash
-npm test  # If you add tests
+curl https://your-app.vercel.app/api/health
 ```
 
 ### Manual Testing
@@ -257,13 +292,28 @@ Try generating llms.txt files for various sites:
 - Company websites
 - Open source project pages
 
+## ⚡ Performance Considerations
+
+### Vercel Function Limits
+- **Execution Time**: 10 seconds (Hobby), 60 seconds (Pro)
+- **Memory**: Up to 1024MB
+- **Payload Size**: 4.5MB request/response limit
+- **Cold Starts**: ~1-3 seconds for Python functions
+
+### Optimization Tips
+- Use smaller `max_pages` values for faster processing
+- Consider `depth_limit` to control crawl scope
+- Large sites may require Pro plan for longer execution time
+
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+3. Test locally with `./start.sh`
+4. Test deployment with `./deploy-vercel.sh`
+5. Commit your changes (`git commit -m 'Add amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
 
 ## 📜 License
 
@@ -273,6 +323,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - [Jeremy Howard](https://github.com/jph00) for proposing the llms.txt standard
 - [llmstxt.org](https://llmstxt.org/) for the specification
+- [Vercel](https://vercel.com/) for serverless function hosting
 - The open source community for the amazing tools used in this project
 
 ## 📞 Support
@@ -282,7 +333,8 @@ If you encounter any issues or have questions:
 1. Check the [Issues](../../issues) page
 2. Create a new issue with detailed information
 3. Include error messages and steps to reproduce
+4. Mention whether you're running locally or on Vercel
 
 ---
 
-Built with ❤️ for the llms.txt standard
+Built with ❤️ for the llms.txt standard 
