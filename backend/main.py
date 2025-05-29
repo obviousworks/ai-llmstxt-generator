@@ -148,6 +148,19 @@ class WebsiteCrawler:
             if keyword in title_lower:
                 score += 0.3
         
+        # For news sites, give recent articles higher importance
+        if any(word in page_data['url'].lower() for word in ['news', 'fox', 'cnn', 'abc', 'cbs', 'nbc']):
+            # News articles get base importance
+            score += 0.4
+            
+            # Local/breaking news gets higher score
+            if any(word in title_lower for word in ['breaking', 'developing', 'urgent', 'alert']):
+                score += 0.3
+            
+            # Recent content patterns (dates, "today", etc.)
+            if any(word in title_lower for word in ['today', 'this morning', 'tonight', 'live']):
+                score += 0.2
+        
         # URL depth (closer to root = more important)
         url_depth = len(urlparse(page_data['url']).path.split('/')) - 1
         score += max(0, (5 - url_depth) * 0.1)
@@ -172,29 +185,45 @@ class WebsiteCrawler:
         title = page_data['title'].lower()
         content = page_data['content'][:500].lower() if page_data['content'] else ""
         
+        # GitHub specific categorization
+        if 'github.com' in url:
+            if any(word in url or word in title for word in ['docs', 'help', 'guides']):
+                return 'Documentation'
+            elif any(word in url or word in title for word in ['api', 'rest', 'graphql']):
+                return 'API Reference'
+            elif any(word in url or word in title for word in ['getting-started', 'quickstart', 'setup']):
+                return 'Getting Started'
+            elif any(word in url or word in title for word in ['features', 'actions', 'copilot', 'security']):
+                return 'Features'
+            elif any(word in url or word in title for word in ['support', 'contact', 'help', 'report']):
+                return 'Support'
+            elif any(word in url or word in title for word in ['terms', 'privacy', 'policy']):
+                return 'Legal'
+            elif any(word in url or word in title for word in ['marketplace', 'tools']):
+                return 'Marketplace'
+            elif any(word in url or word in title for word in ['mobile', 'desktop', 'cli']):
+                return 'Tools'
+            elif any(word in url or word in title for word in ['pricing', 'plans', 'pro', 'enterprise']):
+                return 'Pricing'
+            elif url.count('/') <= 3 and not any(word in url for word in ['/login', '/signup', '/password']):
+                # Main GitHub pages like github.com, github.com/features
+                return 'Platform'
+            elif any(word in url or word in title for word in ['login', 'signup', 'password', 'account']):
+                return 'Account'
+            else:
+                return 'General'
+        
         # News site specific categorization
-        if any(word in url for word in ['nytimes.com', 'washingtonpost.com', 'cnn.com', 'bbc.com', 'reuters.com']):
+        elif any(word in url for word in ['nytimes.com', 'washingtonpost.com', 'cnn.com', 'bbc.com', 'reuters.com', 'fox5vegas.com', 'fox', 'abc', 'cbs', 'nbc', 'news']):
             if any(word in url or word in title for word in ['subscription', 'subscribe', 'home-delivery', 'digital']):
                 return 'Subscription'
-            elif any(word in url or word in title for word in ['politics', 'election', 'government']):
-                return 'Politics'
-            elif any(word in url or word in title for word in ['business', 'economy', 'finance', 'market']):
-                return 'Business'
-            elif any(word in url or word in title for word in ['world', 'international', 'global']):
-                return 'World News'
-            elif any(word in url or word in title for word in ['technology', 'tech', 'science']):
-                return 'Technology'
-            elif any(word in url or word in title for word in ['opinion', 'editorial', 'op-ed']):
-                return 'Opinion'
-            elif any(word in url or word in title for word in ['sports', 'game', 'team']):
-                return 'Sports'
             elif 'about' in url or 'contact' in url or 'help' in url:
                 return 'About'
             else:
                 return 'News'
         
         # Regular categorization for other sites
-        if any(word in url or word in title for word in ['api', 'reference']):
+        elif any(word in url or word in title for word in ['api', 'reference']):
             return 'API Reference'
         elif any(word in url or word in title for word in ['guide', 'tutorial', 'getting-started', 'quickstart']):
             return 'Getting Started'
@@ -389,6 +418,72 @@ Return only the improved section with the same simple link format."""
             print(f"OpenAI cleanup failed: {e}")
             return content  # Return original content if OpenAI fails
     
+    def reorganize_sections_with_ai(self, sections: Dict) -> Dict:
+        """Use AI to reorganize sections based on content analysis"""
+        if not openai_client or len(sections) <= 2:
+            return sections
+            
+        try:
+            # Create a summary of all sections and their content
+            section_summary = ""
+            for section_name, pages in sections.items():
+                if section_name in ['Subscription', 'About']:  # Keep these as-is
+                    continue
+                page_titles = [page['title'] for page in pages[:5]]  # Sample titles
+                section_summary += f"- {section_name}: {', '.join(page_titles)}\n"
+            
+            if not section_summary.strip():
+                return sections
+            
+            prompt = f"""Analyze these content sections and suggest better category names that reflect the actual content themes. Return ONLY a JSON mapping of old names to new names.
+
+Current sections:
+{section_summary}
+
+Requirements:
+- Keep "Subscription" and "About" unchanged if they exist
+- Suggest 3-7 meaningful categories that reflect the actual content
+- Use clear, descriptive names (e.g. "Local Crime", "Breaking News", "Community Events")
+- Group similar content together
+- Return format: {{"old_name": "new_name", "old_name2": "new_name2"}}
+
+JSON mapping:"""
+
+            response = openai_client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "You are an expert content categorization specialist. Analyze content and suggest meaningful, descriptive category names that reflect actual themes."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=300,
+                temperature=0.1,
+                timeout=10
+            )
+            
+            mapping_text = response.choices[0].message.content.strip()
+            # Extract JSON from response
+            import json
+            if '{' in mapping_text:
+                json_start = mapping_text.find('{')
+                json_end = mapping_text.rfind('}') + 1
+                mapping = json.loads(mapping_text[json_start:json_end])
+                
+                # Apply the mapping
+                new_sections = {}
+                for old_name, pages in sections.items():
+                    new_name = mapping.get(old_name, old_name)
+                    if new_name in new_sections:
+                        new_sections[new_name].extend(pages)
+                    else:
+                        new_sections[new_name] = pages
+                
+                return new_sections
+                
+        except Exception as e:
+            print(f"AI section reorganization failed: {e}")
+            
+        return sections
+    
     def generate_summary(self) -> str:
         # Simple summary based on most important pages
         top_pages = self.pages_data[:3]
@@ -425,13 +520,28 @@ Return only the improved section with the same simple link format."""
                 sections[section] = []
             sections[section].append(page)
         
-        # Sort sections by importance
+        # Use AI to reorganize sections based on actual content
+        sections = self.reorganize_sections_with_ai(sections)
+        
+        # Sort sections by importance - now dynamic based on AI reorganization
         if any(site in self.base_url for site in ['nytimes.com', 'washingtonpost.com', 'cnn.com', 'bbc.com', 'reuters.com']):
-            # News site section order
+            # Major news site section order
             section_order = ['News', 'Politics', 'Business', 'World News', 'Technology', 'Opinion', 'Sports', 'About', 'Subscription', 'General']
+        elif 'github.com' in self.base_url:
+            # GitHub site section order
+            section_order = ['Platform', 'Getting Started', 'Documentation', 'API Reference', 'Features', 'Tools', 'Marketplace', 'Pricing', 'Support', 'Legal', 'Account', 'General']
         else:
-            # Regular site section order
-            section_order = ['Getting Started', 'Documentation', 'API Reference', 'Examples', 'Support', 'General']
+            # Dynamic ordering - put larger sections first, keep important ones at top
+            section_order = []
+            important_sections = ['Getting Started', 'Documentation', 'API Reference', 'About', 'Subscription']
+            for section in important_sections:
+                if section in sections:
+                    section_order.append(section)
+            
+            # Add remaining sections by size (largest first)
+            remaining = [(name, len(pages)) for name, pages in sections.items() if name not in section_order]
+            remaining.sort(key=lambda x: x[1], reverse=True)
+            section_order.extend([name for name, _ in remaining])
         
         for section_name in section_order:
             if section_name in sections:
@@ -570,6 +680,12 @@ Return only the improved section with the same simple link format."""
                 
                 if should_use_ai:
                     cleaned_section = self.cleanup_with_openai(section_content, "section")
+                    # Ensure proper spacing after AI cleanup
+                    if not cleaned_section.endswith('\n\n'):
+                        if cleaned_section.endswith('\n'):
+                            cleaned_section += '\n'
+                        else:
+                            cleaned_section += '\n\n'
                     content += cleaned_section
                 else:
                     content += section_content
