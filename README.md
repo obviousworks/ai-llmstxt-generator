@@ -169,6 +169,70 @@ Content is automatically categorized into:
 - **Support** - FAQ, help, and support pages
 - **General** - Other content
 
+## 🔑 Environment Variables
+
+### Required Setup
+
+Copy the example environment file and configure your settings:
+
+```bash
+cp .env_example .env.local
+```
+
+### Available Variables
+
+#### Frontend Configuration
+- `NEXT_PUBLIC_API_URL`: API endpoint URL
+  - **Local development**: `http://localhost:8000`
+  - **Production**: Automatically detected (uses relative paths)
+
+#### Backend Configuration (Optional)
+- `OPENAI_API_KEY`: OpenAI API key for AI-enhanced content cleanup
+  - **Required for**: AI-powered content improvement and summarization
+  - **Optional**: The tool works without this, but content won't be AI-enhanced
+  - **Get your key**: [OpenAI API Keys](https://platform.openai.com/api-keys)
+
+### Environment File Examples
+
+**`.env.local` (for local development):**
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000
+OPENAI_API_KEY=sk-proj-your-openai-api-key-here
+```
+
+**`.env_example` (template):**
+```env
+#NEXT_PUBLIC_API_URL= [your website url]
+NEXT_PUBLIC_API_URL=http://localhost:8000
+
+# OpenAI API Key for content enhancement (optional)
+OPENAI_API_KEY=your_openai_api_key_here
+```
+
+### OpenAI Integration Features
+
+When `OPENAI_API_KEY` is provided, the tool will:
+
+1. **Enhanced Summaries**: AI-cleaned website summaries that are more concise and professional
+2. **Improved Sections**: Better structured content sections with reduced redundancy
+3. **Technical Writing**: Content optimized for AI consumption and clarity
+4. **Automatic Cleanup**: Removes noise and improves readability
+
+**Response Metadata:**
+- `ai_enhanced: true/false` - Indicates if AI enhancement was used
+- `ai_model: "gpt-4o-mini"` - Shows which AI model was used (when available)
+
+### Vercel Deployment Environment Variables
+
+For production deployment on Vercel, set environment variables in your Vercel dashboard:
+
+1. Go to your project settings on Vercel
+2. Navigate to "Environment Variables"
+3. Add `OPENAI_API_KEY` with your API key
+4. Redeploy your application
+
+**Note**: `NEXT_PUBLIC_API_URL` is not needed in production as the frontend automatically uses relative API paths.
+
 ## 🚢 Quick Deployment
 
 ### Deploy to Vercel (recommended)
@@ -202,13 +266,6 @@ If you prefer manual deployment to Vercel:
    ```bash
    vercel --prod
    ```
-
-### Environment Variables
-
-For production deployment, no environment variables are required as the frontend automatically detects the deployment environment and uses relative API paths.
-
-For custom configurations, you can set:
-- `NEXT_PUBLIC_API_URL`: Override the default API URL detection
 
 ## 🛠 Deployment Scripts
 
@@ -248,7 +305,7 @@ The project includes two automated scripts to streamline development and deploym
 - CI/CD pipelines
 - Ensuring consistent deployments
 
-## �� Project Structure
+## 📜 Project Structure
 
 ```
 llm-txt-generator/

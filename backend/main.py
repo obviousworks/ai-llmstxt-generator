@@ -9,6 +9,24 @@ from urllib.parse import urljoin, urlparse
 import re
 from typing import List, Dict, Optional
 import time
+import os
+
+# Initialize OpenAI client only if API key is available
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+openai_client = None
+
+if OPENAI_API_KEY:
+    try:
+        from openai import OpenAI
+        openai_client = OpenAI(api_key=OPENAI_API_KEY)
+        print("OpenAI client initialized successfully")
+    except ImportError:
+        print("OpenAI library not available")
+    except Exception as e:
+        print(f"Failed to initialize OpenAI client: {e}")
+        openai_client = None
+else:
+    print("No OpenAI API key found - AI enhancement will be disabled")
 
 app = FastAPI(title="LLMs.txt Generator", version="1.0.0")
 
@@ -39,6 +57,8 @@ class LLMSTxtResponse(BaseModel):
     llms_full_txt: str
     pages_analyzed: List[PageInfo]
     generation_time: float
+    ai_enhanced: bool
+    ai_model: Optional[str]
 
 class WebsiteCrawler:
     def __init__(self, base_url: str, max_pages: int = 20, depth_limit: int = 3):
@@ -200,29 +220,93 @@ class LLMSTxtGenerator:
         self.pages_data = sorted(pages_data, key=lambda x: x['importance_score'], reverse=True)
         self.site_name = urlparse(base_url).netloc.replace('www.', '').replace('.com', '').replace('.org', '').title()
     
+    def cleanup_with_openai(self, content: str, content_type: str = "summary") -> str:
+        """Clean up content using OpenAI to improve readability and structure"""
+        # Return original content if OpenAI client is not available
+        if not openai_client:
+            print("OpenAI client not available - returning original content")
+            return content
+            
+        try:
+            # Limit content length to avoid token limits (increased from 3000)
+            if len(content) > 5000:
+                content = content[:5000] + "..."
+                return content
+            
+            if content_type == "summary":
+                prompt = f"""Please clean up and improve this website summary for an llms.txt file. Make it more concise, professional, and informative while maintaining all key information. Focus on clarity and usefulness for AI systems:
+
+{content}
+
+Return only the improved summary without any additional commentary."""
+            
+            elif content_type == "section":
+                prompt = f"""Please clean up and improve this documentation section for an llms.txt file. Your goals:
+
+1. **Keep the simple format**: Maintain the "- [Title](URL): Description" format for each link
+2. **Improve descriptions**: Make descriptions concise, clear, and informative (1-2 sentences max)
+3. **Remove redundancy**: Eliminate duplicate information between titles and descriptions
+4. **Standardize language**: Use consistent, professional language throughout
+5. **Preserve all links**: Keep every URL and title exactly as provided
+6. **Organize logically**: Ensure items are in a logical order within the section
+
+The output should be a clean, simple list like this example:
+- [API Reference](url): Clear description of what this covers
+- [Getting Started Guide](url): Brief explanation of the content
+
+Original content:
+{content}
+
+Return only the improved section with the same simple link format."""
+            
+            else:
+                return content  # Return original if unknown type
+            
+            response = openai_client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "You are an expert technical writer and documentation specialist. Your goal is to transform raw web content into well-structured, highly readable documentation that's perfect for AI consumption. Focus on clarity, organization, and preserving all important information while dramatically improving readability."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=2000,  # Increased from 1000 to allow more comprehensive cleanup
+                temperature=0.2,  # Lower temperature for more consistent formatting
+                timeout=15  # Increased timeout for more complex processing
+            )
+            
+            cleaned_content = response.choices[0].message.content.strip()
+            return cleaned_content if cleaned_content else content
+            
+        except Exception as e:
+            print(f"OpenAI cleanup failed: {e}")
+            return content  # Return original content if OpenAI fails
+    
     def generate_summary(self) -> str:
         # Simple summary based on most important pages
         top_pages = self.pages_data[:3]
         if not top_pages:
-            return f"A website providing information and resources."
-        
-        keywords = []
-        for page in top_pages:
-            title_words = page['title'].lower().split()
-            keywords.extend([word for word in title_words if len(word) > 3])
-        
-        # Get most common meaningful words
-        from collections import Counter
-        common_words = Counter(keywords).most_common(3)
-        if common_words:
-            summary = f"A platform providing {', '.join([word[0] for word in common_words])} and related resources."
+            summary = f"A website providing information and resources."
         else:
-            summary = "A website providing information and resources."
+            keywords = []
+            for page in top_pages:
+                title_words = page['title'].lower().split()
+                keywords.extend([word for word in title_words if len(word) > 3])
+            
+            # Get most common meaningful words
+            from collections import Counter
+            common_words = Counter(keywords).most_common(3)
+            if common_words:
+                summary = f"A platform providing {', '.join([word[0] for word in common_words])} and related resources."
+            else:
+                summary = "A website providing information and resources."
         
-        return summary
+        # Clean up the summary with OpenAI
+        return self.cleanup_with_openai(summary, "summary")
     
     def generate_llms_txt(self) -> str:
-        summary = self.generate_summary()
+        domain = urlparse(self.base_url).netloc
+        
+        # Header
+        content = f"# {domain}\n\n"
         
         # Group pages by section
         sections = {}
@@ -232,44 +316,64 @@ class LLMSTxtGenerator:
                 sections[section] = []
             sections[section].append(page)
         
-        # Build llms.txt content
-        content = f"# {self.site_name}\n\n"
-        content += f"> {summary}\n\n"
+        # Sort sections by importance
+        section_order = ['Getting Started', 'Documentation', 'API Reference', 'Examples', 'Support', 'General']
         
-        # Add important information
-        top_pages = self.pages_data[:5]
-        if top_pages:
-            content += "Key information available on this site:\n\n"
-            for page in top_pages:
-                if page['description']:
-                    content += f"- {page['title']}: {page['description']}\n"
-                else:
-                    content += f"- {page['title']}\n"
-            content += "\n"
-        
-        # Add sections
-        for section_name, pages in sections.items():
-            if not pages:
-                continue
+        for section_name in section_order:
+            if section_name in sections:
+                pages = sorted(sections[section_name], key=lambda x: x['importance_score'], reverse=True)
                 
-            content += f"## {section_name}\n\n"
-            
-            # Sort by importance within section
-            sorted_pages = sorted(pages, key=lambda x: x['importance_score'], reverse=True)
-            
-            for page in sorted_pages[:10]:  # Limit per section
-                title = page['title']
-                url = page['url']
-                desc = page['description'] if page['description'] else f"Information about {title.lower()}"
-                content += f"- [{title}]({url}): {desc}\n"
-            
-            content += "\n"
+                # Only include sections that have important pages
+                important_pages = [p for p in pages if p['importance_score'] > 0.3]
+                if not important_pages:
+                    continue
+                
+                # Create clean section with simple format
+                section_content = f"## {section_name}\n\n"
+                
+                for page in important_pages:
+                    title = page['title']
+                    url = page['url']
+                    description = page['description']
+                    
+                    # Create a clean description
+                    if description and len(description) > 10:
+                        # Clean up the description
+                        clean_desc = description.strip()
+                        if len(clean_desc) > 100:
+                            clean_desc = clean_desc[:97] + "..."
+                        section_content += f"- [{title}]({url}): {clean_desc}\n"
+                    else:
+                        # Generate a simple description from title or content
+                        if 'api' in title.lower():
+                            simple_desc = "API documentation and reference"
+                        elif 'guide' in title.lower() or 'tutorial' in title.lower():
+                            simple_desc = "Guide and tutorial information"
+                        elif 'example' in title.lower():
+                            simple_desc = "Examples and sample code"
+                        elif 'doc' in title.lower():
+                            simple_desc = "Documentation and information"
+                        else:
+                            # Extract a brief description from content
+                            content_words = page['content'][:200].split()
+                            if len(content_words) > 10:
+                                simple_desc = ' '.join(content_words[:15]) + "..."
+                            else:
+                                simple_desc = f"Information about {title.lower()}"
+                        
+                        section_content += f"- [{title}]({url}): {simple_desc}\n"
+                
+                section_content += "\n"
+                
+                # Use AI to clean up the section format and descriptions
+                cleaned_section = self.cleanup_with_openai(section_content, "section")
+                content += cleaned_section
         
-        # Add optional section for less important content
-        optional_pages = [p for p in self.pages_data if p['importance_score'] < 0.3]
+        # Add optional section for less important but potentially useful pages
+        optional_pages = [p for p in self.pages_data if p['importance_score'] <= 0.3 and p['importance_score'] > 0.1]
         if optional_pages:
             content += "## Optional\n\n"
-            for page in optional_pages[:5]:
+            for page in optional_pages[:5]:  # Limit to 5 optional pages
                 title = page['title']
                 url = page['url']
                 content += f"- [{title}]({url})\n"
@@ -339,11 +443,17 @@ async def generate_llms_txt(request: CrawlRequest):
         
         generation_time = time.time() - start_time
         
+        # Determine if AI enhancement was actually used
+        ai_enhanced = openai_client is not None
+        ai_model = 'gpt-4o-mini' if ai_enhanced else None
+        
         return LLMSTxtResponse(
             llms_txt=llms_txt,
             llms_full_txt=llms_full_txt,
             pages_analyzed=pages_info,
-            generation_time=generation_time
+            generation_time=generation_time,
+            ai_enhanced=ai_enhanced,
+            ai_model=ai_model
         )
         
     except Exception as e:
