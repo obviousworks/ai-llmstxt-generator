@@ -4,6 +4,20 @@ import { useState } from 'react'
 import { Download, Globe, FileText, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
 
+interface ValidationError {
+  type?: string
+  loc?: string[]
+  msg?: string
+  input?: string
+  ctx?: Record<string, unknown>
+  url?: string
+}
+
+interface ErrorResponse {
+  detail?: ValidationError[] | string
+  error?: string
+}
+
 interface PageInfo {
   url: string
   title: string
@@ -115,7 +129,7 @@ export default function Home() {
       console.log('Raw response:', responseText.substring(0, 200))
 
       if (!response.ok) {
-        let errorData
+        let errorData: ErrorResponse
         try {
           errorData = JSON.parse(responseText)
         } catch {
@@ -124,13 +138,16 @@ export default function Home() {
         
         // Extract more helpful error message from Pydantic validation errors
         if (errorData.detail && Array.isArray(errorData.detail)) {
-          const urlError = errorData.detail.find((err: any) => err.loc?.includes('url'))
+          const urlError = errorData.detail.find((err: ValidationError) => err.loc?.includes('url'))
           if (urlError) {
             throw new Error(`Invalid URL format: ${urlError.msg}. Please enter a valid URL like https://example.com`)
           }
         }
         
-        throw new Error(errorData.error || errorData.detail || 'Failed to generate llms.txt')
+        const errorMessage = typeof errorData.detail === 'string' 
+          ? errorData.detail 
+          : errorData.error || 'Failed to generate llms.txt'
+        throw new Error(errorMessage)
       }
 
       const data: GenerationResult = JSON.parse(responseText)
