@@ -8,5 +8,22 @@
       "src": "/api/health",
       "dest": "/api/health.py"
     }
+  ],
+  "functions": {
+    "api/generate.py": {
+      "maxDuration": 300
+    },
+    "api/scheduler.py": {
+      "maxDuration": 600
+    },
+    "api/cron.py": {
+      "maxDuration": 900
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/cron",
+      "schedule": "0 */6 * * *"
+    }
   ]
 } 

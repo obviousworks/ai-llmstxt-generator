@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Download, Globe, FileText, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
+import Link from 'next/link'
 
 interface PageInfo {
   url: string
@@ -130,14 +131,24 @@ export default function Home() {
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-              <FileText className="w-6 h-6 text-white" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                <FileText className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">LLMs.txt Generator</h1>
+                <p className="text-sm text-gray-600">Automated llms.txt file generation for websites</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">LLMs.txt Generator</h1>
-              <p className="text-sm text-gray-600">Automated llms.txt file generation for websites</p>
-            </div>
+            <nav>
+              <Link 
+                href="/monitor"
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200 text-sm font-medium"
+              >
+                🔄 Auto-Monitor Sites
+              </Link>
+            </nav>
           </div>
         </div>
       </header>
