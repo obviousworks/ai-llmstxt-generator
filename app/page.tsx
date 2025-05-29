@@ -17,6 +17,9 @@ interface GenerationResult {
   llms_full_txt: string
   pages_analyzed: PageInfo[]
   generation_time: number
+  ai_enhanced: boolean
+  ai_model: string | null
+  used_existing?: boolean
 }
 
 // Get API URL - use environment variable, or detect if we're in development vs production
@@ -244,9 +247,17 @@ export default function Home() {
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                   <div>
-                    <h3 className="text-sm font-medium text-green-800">Generation Complete</h3>
+                    <h3 className="text-sm font-medium text-green-800">
+                      {result.used_existing ? 'Found Existing llms.txt' : 'Generation Complete'}
+                    </h3>
                     <p className="text-sm text-green-700 mt-1">
-                      Analyzed {result.pages_analyzed.length} pages in {result.generation_time.toFixed(2)} seconds
+                      {result.used_existing 
+                        ? 'Using existing llms.txt file found on the website'
+                        : `Analyzed ${result.pages_analyzed.length} pages in ${result.generation_time.toFixed(2)} seconds`
+                      }
+                      {result.ai_enhanced && !result.used_existing && (
+                        <span className="block">Enhanced with AI ({result.ai_model})</span>
+                      )}
                     </p>
                   </div>
                 </div>

@@ -59,6 +59,7 @@ class LLMSTxtResponse(BaseModel):
     generation_time: float
     ai_enhanced: bool
     ai_model: Optional[str]
+    used_existing: Optional[bool] = False
 
 class WebsiteCrawler:
     def __init__(self, base_url: str, max_pages: int = 20, depth_limit: int = 3):
@@ -169,7 +170,30 @@ class WebsiteCrawler:
     def categorize_page(self, page_data: Dict) -> str:
         url = page_data['url'].lower()
         title = page_data['title'].lower()
+        content = page_data['content'][:500].lower() if page_data['content'] else ""
         
+        # News site specific categorization
+        if any(word in url for word in ['nytimes.com', 'washingtonpost.com', 'cnn.com', 'bbc.com', 'reuters.com']):
+            if any(word in url or word in title for word in ['subscription', 'subscribe', 'home-delivery', 'digital']):
+                return 'Subscription'
+            elif any(word in url or word in title for word in ['politics', 'election', 'government']):
+                return 'Politics'
+            elif any(word in url or word in title for word in ['business', 'economy', 'finance', 'market']):
+                return 'Business'
+            elif any(word in url or word in title for word in ['world', 'international', 'global']):
+                return 'World News'
+            elif any(word in url or word in title for word in ['technology', 'tech', 'science']):
+                return 'Technology'
+            elif any(word in url or word in title for word in ['opinion', 'editorial', 'op-ed']):
+                return 'Opinion'
+            elif any(word in url or word in title for word in ['sports', 'game', 'team']):
+                return 'Sports'
+            elif 'about' in url or 'contact' in url or 'help' in url:
+                return 'About'
+            else:
+                return 'News'
+        
+        # Regular categorization for other sites
         if any(word in url or word in title for word in ['api', 'reference']):
             return 'API Reference'
         elif any(word in url or word in title for word in ['guide', 'tutorial', 'getting-started', 'quickstart']):
@@ -207,12 +231,80 @@ class WebsiteCrawler:
                         if link not in self.visited_urls:
                             queue.append((link, depth + 1))
         
+        # Deduplicate pages by base URL (remove fragment duplicates)
+        unique_pages = {}
+        for page in self.pages_data:
+            # Remove URL fragments and query parameters for deduplication
+            base_url = page['url'].split('#')[0].split('?')[0]
+            
+            # Keep the page with the cleanest URL (shortest) if duplicates exist
+            if base_url in unique_pages:
+                if len(page['url']) < len(unique_pages[base_url]['url']):
+                    unique_pages[base_url] = page
+            else:
+                unique_pages[base_url] = page
+        
+        # Convert back to list
+        self.pages_data = list(unique_pages.values())
+        
+        # For news sites, limit subscription pages to avoid repetition
+        if any(site in self.base_url for site in ['nytimes.com', 'washingtonpost.com', 'cnn.com']):
+            subscription_pages = [p for p in self.pages_data if 'subscription' in p['url'].lower()]
+            other_pages = [p for p in self.pages_data if 'subscription' not in p['url'].lower()]
+            
+            # Keep only the main subscription page
+            if subscription_pages:
+                main_subscription = min(subscription_pages, key=lambda x: len(x['url']))
+                self.pages_data = other_pages + [main_subscription]
+        
         # Calculate importance scores
         for page in self.pages_data:
             page['importance_score'] = self.calculate_importance_score(page, self.pages_data)
             page['section'] = self.categorize_page(page)
         
         return self.pages_data
+    
+    async def check_existing_llms_txt(self, base_url: str) -> Optional[str]:
+        """Check if the website already has an llms.txt file"""
+        try:
+            # Try common locations for llms.txt
+            possible_urls = [
+                f"{base_url.rstrip('/')}/llms.txt",
+                f"{base_url.rstrip('/')}/.well-known/llms.txt",
+            ]
+            
+            connector = aiohttp.TCPConnector(ssl=self.ssl_context)
+            
+            async with aiohttp.ClientSession(connector=connector) as session:
+                for llms_url in possible_urls:
+                    try:
+                        headers = {
+                            'User-Agent': 'LLMs.txt Generator Bot',
+                            'Accept': 'text/plain,text/markdown,text/*',
+                        }
+                        
+                        async with session.get(
+                            llms_url,
+                            timeout=aiohttp.ClientTimeout(total=10),
+                            headers=headers,
+                            ssl=self.ssl_context
+                        ) as response:
+                            if response.status == 200:
+                                content_type = response.headers.get('content-type', '').lower()
+                                if any(ct in content_type for ct in ['text/', 'application/octet-stream']):
+                                    content = await response.text()
+                                    if content.strip() and len(content) > 50:  # Basic validation
+                                        print(f"Found existing llms.txt at {llms_url}")
+                                        return content
+                    except Exception as e:
+                        print(f"Error checking {llms_url}: {e}")
+                        continue
+            
+            return None
+            
+        except Exception as e:
+            print(f"Error checking for existing llms.txt: {e}")
+            return None
 
 class LLMSTxtGenerator:
     def __init__(self, base_url: str, pages_data: List[Dict]):
@@ -228,10 +320,27 @@ class LLMSTxtGenerator:
             return content
             
         try:
-            # Limit content length to avoid token limits (increased from 3000)
-            if len(content) > 5000:
-                content = content[:5000] + "..."
-                return content
+            # More aggressive content limits for large crawls
+            max_content_length = 3000  # Reduced from 5000
+            if len(content) > max_content_length:
+                if content_type == "section":
+                    # For sections, try to keep complete entries by splitting on newlines
+                    lines = content.split('\n')
+                    truncated_lines = []
+                    current_length = 0
+                    
+                    for line in lines:
+                        if current_length + len(line) + 1 <= max_content_length:
+                            truncated_lines.append(line)
+                            current_length += len(line) + 1
+                        else:
+                            break
+                    
+                    content = '\n'.join(truncated_lines)
+                    if len(lines) > len(truncated_lines):
+                        content += f"\n\n[Note: {len(lines) - len(truncated_lines)} more items truncated for AI processing]"
+                else:
+                    content = content[:max_content_length] + "..."
             
             if content_type == "summary":
                 prompt = f"""Please clean up and improve this website summary for an llms.txt file. Make it more concise, professional, and informative while maintaining all key information. Focus on clarity and usefulness for AI systems:
@@ -268,9 +377,9 @@ Return only the improved section with the same simple link format."""
                     {"role": "system", "content": "You are an expert technical writer and documentation specialist. Your goal is to transform raw web content into well-structured, highly readable documentation that's perfect for AI consumption. Focus on clarity, organization, and preserving all important information while dramatically improving readability."},
                     {"role": "user", "content": prompt}
                 ],
-                max_tokens=2000,  # Increased from 1000 to allow more comprehensive cleanup
-                temperature=0.2,  # Lower temperature for more consistent formatting
-                timeout=15  # Increased timeout for more complex processing
+                max_tokens=1500,  # Reduced from 2000 to be more conservative
+                temperature=0.2,
+                timeout=15
             )
             
             cleaned_content = response.choices[0].message.content.strip()
@@ -317,7 +426,12 @@ Return only the improved section with the same simple link format."""
             sections[section].append(page)
         
         # Sort sections by importance
-        section_order = ['Getting Started', 'Documentation', 'API Reference', 'Examples', 'Support', 'General']
+        if any(site in self.base_url for site in ['nytimes.com', 'washingtonpost.com', 'cnn.com', 'bbc.com', 'reuters.com']):
+            # News site section order
+            section_order = ['News', 'Politics', 'Business', 'World News', 'Technology', 'Opinion', 'Sports', 'About', 'Subscription', 'General']
+        else:
+            # Regular site section order
+            section_order = ['Getting Started', 'Documentation', 'API Reference', 'Examples', 'Support', 'General']
         
         for section_name in section_order:
             if section_name in sections:
@@ -328,6 +442,16 @@ Return only the improved section with the same simple link format."""
                 if not important_pages:
                     continue
                 
+                # Limit pages per section for large crawls to manage AI processing
+                total_pages = len(self.pages_data)
+                if total_pages > 50:
+                    # For very large crawls, limit to top 5 pages per section
+                    important_pages = important_pages[:5]
+                elif total_pages > 20:
+                    # For medium crawls, limit to top 8 pages per section
+                    important_pages = important_pages[:8]
+                # For small crawls (<=20 pages), use all important pages
+                
                 # Create clean section with simple format
                 section_content = f"## {section_name}\n\n"
                 
@@ -336,38 +460,119 @@ Return only the improved section with the same simple link format."""
                     url = page['url']
                     description = page['description']
                     
-                    # Create a clean description
-                    if description and len(description) > 10:
-                        # Clean up the description
+                    # Create a comprehensive description
+                    final_description = ""
+                    
+                    if description and len(description.strip()) > 10:
+                        # Clean up the existing description
                         clean_desc = description.strip()
-                        if len(clean_desc) > 100:
-                            clean_desc = clean_desc[:97] + "..."
-                        section_content += f"- [{title}]({url}): {clean_desc}\n"
+                        # Remove common prefixes and suffixes
+                        clean_desc = clean_desc.replace("Learn more about ", "").replace("Documentation for ", "")
+                        if len(clean_desc) > 120:
+                            clean_desc = clean_desc[:117] + "..."
+                        final_description = clean_desc
                     else:
-                        # Generate a simple description from title or content
-                        if 'api' in title.lower():
-                            simple_desc = "API documentation and reference"
-                        elif 'guide' in title.lower() or 'tutorial' in title.lower():
-                            simple_desc = "Guide and tutorial information"
-                        elif 'example' in title.lower():
-                            simple_desc = "Examples and sample code"
-                        elif 'doc' in title.lower():
-                            simple_desc = "Documentation and information"
-                        else:
-                            # Extract a brief description from content
-                            content_words = page['content'][:200].split()
-                            if len(content_words) > 10:
-                                simple_desc = ' '.join(content_words[:15]) + "..."
-                            else:
-                                simple_desc = f"Information about {title.lower()}"
+                        # Generate a meaningful description based on title, URL, and content
+                        url_parts = url.lower()
+                        title_lower = title.lower()
+                        content_start = page['content'][:300].lower() if page['content'] else ""
                         
-                        section_content += f"- [{title}]({url}): {simple_desc}\n"
+                        # API-related pages
+                        if any(word in title_lower for word in ['api', 'endpoint', 'reference']):
+                            if 'authentication' in url_parts or 'auth' in title_lower:
+                                final_description = "API authentication and authorization methods"
+                            elif 'key' in title_lower:
+                                final_description = "API key management and configuration"
+                            elif any(word in title_lower for word in ['create', 'post', 'add']):
+                                final_description = "API endpoint for creating or adding resources"
+                            elif any(word in title_lower for word in ['get', 'retrieve', 'fetch']):
+                                final_description = "API endpoint for retrieving data and information"
+                            elif any(word in title_lower for word in ['update', 'modify', 'edit']):
+                                final_description = "API endpoint for updating and modifying resources"
+                            elif any(word in title_lower for word in ['delete', 'remove']):
+                                final_description = "API endpoint for deleting and removing resources"
+                            elif 'list' in title_lower:
+                                final_description = "API endpoint for listing and browsing resources"
+                            else:
+                                final_description = "API documentation and technical reference"
+                        
+                        # Documentation pages
+                        elif any(word in title_lower for word in ['guide', 'tutorial', 'how to', 'getting started']):
+                            if 'quick' in title_lower or 'start' in title_lower:
+                                final_description = "Quick start guide and initial setup instructions"
+                            elif 'install' in title_lower:
+                                final_description = "Installation and setup guide"
+                            else:
+                                final_description = "Step-by-step guide and tutorial information"
+                        
+                        # Example pages
+                        elif any(word in title_lower for word in ['example', 'sample', 'demo']):
+                            final_description = "Code examples and practical implementation samples"
+                        
+                        # Configuration pages
+                        elif any(word in title_lower for word in ['config', 'setting', 'option']):
+                            final_description = "Configuration options and settings documentation"
+                        
+                        # Error/troubleshooting pages
+                        elif any(word in title_lower for word in ['error', 'troubleshoot', 'debug', 'faq']):
+                            final_description = "Troubleshooting guide and common issues resolution"
+                        
+                        # Legal/policy pages
+                        elif any(word in title_lower for word in ['privacy', 'terms', 'policy', 'legal']):
+                            final_description = "Legal documentation and policy information"
+                        
+                        # Try to extract meaningful description from content
+                        elif page['content'] and len(page['content']) > 50:
+                            # Get first meaningful sentence from content
+                            content_sentences = page['content'].split('.')[:3]
+                            meaningful_content = []
+                            for sentence in content_sentences:
+                                sentence = sentence.strip()
+                                if len(sentence) > 20 and not sentence.startswith(('©', 'Copyright', 'All rights')):
+                                    meaningful_content.append(sentence)
+                                    if len(meaningful_content) >= 2:
+                                        break
+                            
+                            if meaningful_content:
+                                combined = '. '.join(meaningful_content)
+                                if len(combined) > 120:
+                                    combined = combined[:117] + "..."
+                                final_description = combined
+                            else:
+                                final_description = f"Information and documentation about {title.lower()}"
+                        
+                        # Final fallback
+                        else:
+                            final_description = f"Documentation and information about {title.lower()}"
+                    
+                    # Ensure description starts with capital letter and ends properly
+                    if final_description:
+                        final_description = final_description[0].upper() + final_description[1:]
+                        if not final_description.endswith(('.', '!', '?')):
+                            final_description += "."
+                    
+                    section_content += f"- [{title}]({url}): {final_description}\n"
                 
                 section_content += "\n"
                 
-                # Use AI to clean up the section format and descriptions
-                cleaned_section = self.cleanup_with_openai(section_content, "section")
-                content += cleaned_section
+                # Use AI to clean up the section format and descriptions, but be selective
+                should_use_ai = True
+                total_pages = len(self.pages_data)
+                
+                # Skip AI for less important sections if there are many pages
+                if total_pages > 50:
+                    # Only use AI for the most important sections
+                    priority_sections = ['Getting Started', 'Documentation', 'API Reference', 'News', 'Politics']
+                    should_use_ai = section_name in priority_sections
+                elif total_pages > 100:
+                    # For very large crawls, skip AI enhancement entirely to avoid timeouts
+                    should_use_ai = False
+                
+                if should_use_ai:
+                    cleaned_section = self.cleanup_with_openai(section_content, "section")
+                    content += cleaned_section
+                else:
+                    content += section_content
         
         # Add optional section for less important but potentially useful pages
         optional_pages = [p for p in self.pages_data if p['importance_score'] <= 0.3 and p['importance_score'] > 0.1]
@@ -412,6 +617,31 @@ async def generate_llms_txt(request: CrawlRequest):
     start_time = time.time()
     
     try:
+        # Initialize crawler for checking existing llms.txt
+        crawler = WebsiteCrawler(str(request.url))
+        
+        # First, check if the website already has an llms.txt file
+        existing_llms_txt = await crawler.check_existing_llms_txt(str(request.url))
+        if existing_llms_txt:
+            pages_info = [PageInfo(
+                url=f"{str(request.url).rstrip('/')}/llms.txt",
+                title='Existing llms.txt',
+                description='Found existing llms.txt file on the website',
+                content_length=len(existing_llms_txt),
+                importance_score=1.0,
+                section='Existing Documentation'
+            )]
+            
+            return LLMSTxtResponse(
+                llms_txt=existing_llms_txt,
+                llms_full_txt=existing_llms_txt,
+                pages_analyzed=pages_info,
+                generation_time=time.time() - start_time,
+                ai_enhanced=False,
+                ai_model=None,
+                used_existing=True
+            )
+        
         # Crawl the website
         crawler = WebsiteCrawler(
             str(request.url), 
@@ -426,6 +656,18 @@ async def generate_llms_txt(request: CrawlRequest):
         
         # Generate llms.txt files
         generator = LLMSTxtGenerator(str(request.url), pages_data)
+        
+        # Log AI processing strategy based on crawl size
+        total_pages = len(pages_data)
+        if total_pages > 100:
+            print(f"Large crawl detected ({total_pages} pages) - AI enhancement disabled to ensure fast processing")
+        elif total_pages > 50:
+            print(f"Medium-large crawl detected ({total_pages} pages) - AI enhancement limited to priority sections")
+        elif total_pages > 20:
+            print(f"Medium crawl detected ({total_pages} pages) - AI enhancement with page limits per section")
+        else:
+            print(f"Small crawl detected ({total_pages} pages) - full AI enhancement enabled")
+        
         llms_txt = generator.generate_llms_txt()
         llms_full_txt = generator.generate_llms_full_txt()
         
@@ -453,7 +695,8 @@ async def generate_llms_txt(request: CrawlRequest):
             pages_analyzed=pages_info,
             generation_time=generation_time,
             ai_enhanced=ai_enhanced,
-            ai_model=ai_model
+            ai_model=ai_model,
+            used_existing=False
         )
         
     except Exception as e:
