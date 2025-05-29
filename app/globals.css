@@ -24,3 +24,44 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Custom placeholder styling for better visibility */
+input::placeholder {
+  color: #374151 !important; /* tailwind gray-700 - much darker than default */
+  opacity: 1 !important; /* Firefox */
+}
+
+input[type="url"]::placeholder {
+  color: #374151 !important; /* specifically target URL inputs */
+  opacity: 1 !important;
+}
+
+select::placeholder {
+  color: #6b7280; /* tailwind gray-500 - darker than default */
+  opacity: 1; /* Firefox */
+}
+
+/* For webkit browsers */
+input::-webkit-input-placeholder {
+  color: #374151 !important;
+  opacity: 1 !important;
+}
+
+input[type="url"]::-webkit-input-placeholder {
+  color: #374151 !important;
+  opacity: 1 !important;
+}
+
+select::-webkit-input-placeholder {
+  color: #6b7280;
+}
+
+/* Make select dropdown text darker */
+select {
+  color: #374151; /* tailwind gray-700 - darker text for selected options */
+}
+
+/* Ensure option text is also dark */
+select option {
+  color: #374151; /* tailwind gray-700 */
+}

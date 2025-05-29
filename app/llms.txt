@@ -1,0 +1,5 @@
+# llm-txt-generator.vercel.app
+
+## Documentation
+
+- [LLMs.txt Generator - Automated Documentation for AI Models](https://llm-txt-generator.vercel.app/): Automatically generate llms.txt files from any website to create AI-friendly documentation.

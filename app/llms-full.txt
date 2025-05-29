@@ -1,0 +1,14 @@
+# llm-txt-generator.vercel.app - Complete Documentation
+
+Generated from 1 pages
+
+## LLMs.txt Generator - Automated Documentation for AI Models
+URL: https://llm-txt-generator.vercel.app/
+Section: Documentation
+Importance: 0.70
+Description: Generate llms.txt files automatically from any website. Create AI-friendly documentation that helps Large Language Models understand your site content with structured navigation, key page descriptions, and curated resources.
+
+Generate llms.txtWebsite URLMaximum Pages to Crawl10 pages20 pages (recommended)50 pages100 pagesGenerate llms.txtAbout llms.txtThe llms.txt standard helps Large Language Models understand your website content by providing:Structured content navigationKey page descriptions and metadataCurated links to important resourcesAI-friendly markdown formatLearn more about the specification at llmstxt.org
+
+================================================================================
+

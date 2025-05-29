@@ -158,8 +158,8 @@ export default function Home() {
                       id="url"
                       value={url}
                       onChange={(e) => setUrl(e.target.value)}
-                      placeholder="https://example.com"
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter website URL (e.g., https://docs.anthropic.com)"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-700 placeholder:text-gray-700 text-gray-900"
                       disabled={isLoading}
                     />
                   </div>
@@ -177,7 +177,7 @@ export default function Home() {
                     disabled={isLoading}
                   >
                     <option value={10}>10 pages</option>
-                    <option value={20}>20 pages</option>
+                    <option value={20}>20 pages (recommended)</option>
                     <option value={50}>50 pages</option>
                     <option value={100}>100 pages</option>
                   </select>
