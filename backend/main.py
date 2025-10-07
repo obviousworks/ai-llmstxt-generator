@@ -7,10 +7,11 @@ import ssl
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 import re
-from typing import List, Dict, Optional, Literal
+from typing import List, Dict, Optional, Literal, Set
 import time
 import os
 import json
+import xml.etree.ElementTree as ET
 
 # Initialize OpenAI client only if API key is available
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
@@ -44,6 +45,8 @@ class CrawlRequest(BaseModel):
     url: HttpUrl
     max_pages: Optional[int] = 20
     depth_limit: Optional[int] = 3
+    crawl_all: Optional[bool] = False
+    generation_type: Optional[Literal["summary", "fulltext", "both"]] = "both"
 
 class PageInfo(BaseModel):
     url: str
@@ -91,11 +94,12 @@ class ContentAnalysis(BaseModel):
     quality_improvements: List[str] = Field(description="Suggestions for description improvements")
 
 class WebsiteCrawler:
-    def __init__(self, base_url: str, max_pages: int = 20, depth_limit: int = 3):
+    def __init__(self, base_url: str, max_pages: int = 20, depth_limit: int = 3, crawl_all: bool = False):
         self.base_url = base_url
         self.domain = urlparse(base_url).netloc
-        self.max_pages = max_pages
-        self.depth_limit = depth_limit
+        self.max_pages = max_pages if not crawl_all else 999999
+        self.depth_limit = depth_limit if not crawl_all else 999
+        self.crawl_all = crawl_all
         self.visited_urls = set()
         self.pages_data = []
         
@@ -137,8 +141,11 @@ class WebsiteCrawler:
                 description = soup.find('meta', attrs={'name': 'description'})
                 description = description.get('content', '').strip() if description else ''
                 
-                # Remove scripts, styles, nav, footer, etc.
-                for tag in soup(['script', 'style', 'nav', 'footer', 'header', 'aside']):
+                # Extract FAQs from JSON-LD Schema.org markup
+                faqs = self._extract_faqs_from_schema(soup)
+                
+                # Remove styles, nav, footer, etc. (but keep scripts for now to extract JSON-LD)
+                for tag in soup(['style', 'nav', 'footer', 'header', 'aside']):
                     tag.decompose()
                 
                 # Get main content
@@ -163,12 +170,55 @@ class WebsiteCrawler:
                     'description': description,
                     'content': content_text,
                     'content_length': len(content_text),
-                    'links': links[:10]  # Limit links per page
+                    'links': links[:10],  # Limit links per page
+                    'faqs': faqs  # Include extracted FAQs
                 }
                 
         except Exception as e:
             print(f"Error fetching {url}: {type(e).__name__}: {e}")
             return None
+    
+    def _extract_faqs_from_schema(self, soup: BeautifulSoup) -> List[Dict[str, str]]:
+        """Extract FAQs from JSON-LD Schema.org FAQPage markup"""
+        faqs = []
+        
+        try:
+            # Find all script tags with type="application/ld+json"
+            json_ld_scripts = soup.find_all('script', type='application/ld+json')
+            
+            for script in json_ld_scripts:
+                try:
+                    data = json.loads(script.string)
+                    
+                    # Check if this is a FAQPage
+                    if isinstance(data, dict) and data.get('@type') == 'FAQPage':
+                        main_entity = data.get('mainEntity', [])
+                        
+                        for item in main_entity:
+                            if item.get('@type') == 'Question':
+                                question = item.get('name', '')
+                                answer_obj = item.get('acceptedAnswer', {})
+                                answer = answer_obj.get('text', '') if isinstance(answer_obj, dict) else ''
+                                
+                                if question and answer:
+                                    faqs.append({
+                                        'question': question,
+                                        'answer': answer
+                                    })
+                                    
+                except json.JSONDecodeError:
+                    continue
+                except Exception as e:
+                    print(f"Error parsing JSON-LD: {e}")
+                    continue
+            
+            if faqs:
+                print(f"  ✓ Extracted {len(faqs)} FAQs from Schema.org markup")
+                
+        except Exception as e:
+            print(f"Error extracting FAQs: {e}")
+        
+        return faqs
     
     def calculate_importance_score(self, page_data: Dict, all_pages: List[Dict]) -> float:
         """Calculate importance score using AI analysis if available, otherwise use adaptive heuristics"""
@@ -238,6 +288,12 @@ class WebsiteCrawler:
             score += 0.2
         elif content_length >= 5000:
             score += 0.1
+        
+        # Boost score for pages with FAQs (very valuable for LLMs)
+        if page_data.get('faqs') and len(page_data['faqs']) > 0:
+            faq_count = len(page_data['faqs'])
+            score += min(0.3, faq_count * 0.02)  # Up to 0.3 bonus for FAQs
+            print(f"  ✓ Page has {faq_count} FAQs, boosting importance score by {min(0.3, faq_count * 0.02):.2f}")
         
         # Use AI to determine site characteristics for adaptive scoring
         site_characteristics = self._determine_site_characteristics_with_ai(all_pages[:20])
@@ -517,29 +573,154 @@ Provide assignments for each page index and explain your reasoning."""
                 page['ai_keywords'] = analysis.keywords
                 page['importance_factors'] = analysis.importance_factors
     
+    async def fetch_sitemap_urls(self, session: aiohttp.ClientSession) -> Set[str]:
+        """Fetch all URLs from sitemap.xml or sitemap_index.xml"""
+        urls = set()
+        
+        # Try common sitemap locations
+        sitemap_urls = [
+            f"{self.base_url.rstrip('/')}/sitemap_index.xml",
+            f"{self.base_url.rstrip('/')}/sitemap.xml",
+            f"{self.base_url.rstrip('/')}/sitemap-index.xml",
+            f"{self.base_url.rstrip('/')}/sitemap1.xml",
+        ]
+        
+        # Also check robots.txt for sitemap location
+        try:
+            robots_url = f"{self.base_url.rstrip('/')}/robots.txt"
+            async with session.get(robots_url, timeout=aiohttp.ClientTimeout(total=10), ssl=self.ssl_context) as response:
+                if response.status == 200:
+                    robots_content = await response.text()
+                    for line in robots_content.split('\n'):
+                        if line.lower().startswith('sitemap:'):
+                            sitemap_url = line.split(':', 1)[1].strip()
+                            sitemap_urls.insert(0, sitemap_url)  # Prioritize robots.txt sitemap
+                            print(f"Found sitemap in robots.txt: {sitemap_url}")
+        except Exception as e:
+            print(f"Could not fetch robots.txt: {e}")
+        
+        # Try each sitemap URL
+        for sitemap_url in sitemap_urls:
+            try:
+                print(f"Trying sitemap: {sitemap_url}")
+                async with session.get(sitemap_url, timeout=aiohttp.ClientTimeout(total=15), ssl=self.ssl_context) as response:
+                    if response.status == 200:
+                        content = await response.text()
+                        sitemap_urls_found = await self._parse_sitemap(content, session)
+                        urls.update(sitemap_urls_found)
+                        if sitemap_urls_found:
+                            print(f"✓ Found {len(sitemap_urls_found)} URLs in {sitemap_url}")
+                            break  # Stop after first successful sitemap
+            except Exception as e:
+                print(f"Could not fetch {sitemap_url}: {e}")
+                continue
+        
+        return urls
+    
+    async def _parse_sitemap(self, content: str, session: aiohttp.ClientSession) -> Set[str]:
+        """Parse sitemap XML and extract URLs, handling both sitemap and sitemap_index"""
+        urls = set()
+        
+        try:
+            root = ET.fromstring(content)
+            
+            # Handle namespace
+            namespace = {'ns': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
+            
+            # Check if this is a sitemap index
+            sitemap_elements = root.findall('.//ns:sitemap/ns:loc', namespace)
+            if sitemap_elements:
+                print(f"Found sitemap index with {len(sitemap_elements)} sub-sitemaps")
+                # This is a sitemap index, fetch each sub-sitemap
+                for sitemap_elem in sitemap_elements:
+                    sub_sitemap_url = sitemap_elem.text
+                    try:
+                        async with session.get(sub_sitemap_url, timeout=aiohttp.ClientTimeout(total=15), ssl=self.ssl_context) as response:
+                            if response.status == 200:
+                                sub_content = await response.text()
+                                sub_urls = await self._parse_sitemap(sub_content, session)
+                                urls.update(sub_urls)
+                                print(f"  ✓ Parsed sub-sitemap: {sub_sitemap_url} ({len(sub_urls)} URLs)")
+                    except Exception as e:
+                        print(f"  ✗ Could not fetch sub-sitemap {sub_sitemap_url}: {e}")
+            else:
+                # This is a regular sitemap, extract URLs
+                url_elements = root.findall('.//ns:url/ns:loc', namespace)
+                for url_elem in url_elements:
+                    url = url_elem.text
+                    if url and urlparse(url).netloc == self.domain:
+                        urls.add(url)
+                
+                # Also try without namespace (some sitemaps don't use it)
+                if not urls:
+                    for url_elem in root.findall('.//url/loc'):
+                        url = url_elem.text
+                        if url and urlparse(url).netloc == self.domain:
+                            urls.add(url)
+        
+        except ET.ParseError as e:
+            print(f"XML parse error: {e}")
+        except Exception as e:
+            print(f"Error parsing sitemap: {e}")
+        
+        return urls
+    
     async def crawl(self) -> List[Dict]:
         # Create connector with SSL context
         connector = aiohttp.TCPConnector(ssl=self.ssl_context)
         
         async with aiohttp.ClientSession(connector=connector) as session:
-            queue = [(self.base_url, 0)]  # (url, depth)
+            # Try to fetch URLs from sitemap first
+            sitemap_urls = await self.fetch_sitemap_urls(session)
             
-            while queue and len(self.visited_urls) < self.max_pages:
-                url, depth = queue.pop(0)
+            if sitemap_urls:
+                print(f"🗺️  Using sitemap with {len(sitemap_urls)} URLs")
+                # Use sitemap URLs as the primary source
+                urls_to_crawl = list(sitemap_urls)
                 
-                if url in self.visited_urls or depth > self.depth_limit:
-                    continue
+                # Limit URLs if not crawling all
+                if not self.crawl_all and len(urls_to_crawl) > self.max_pages:
+                    print(f"Limiting to {self.max_pages} pages from sitemap")
+                    urls_to_crawl = urls_to_crawl[:self.max_pages]
                 
-                self.visited_urls.add(url)
-                page_data = await self.fetch_page(session, url)
-                
-                if page_data:
-                    self.pages_data.append(page_data)
+                # Fetch each URL from sitemap
+                for url in urls_to_crawl:
+                    if url in self.visited_urls:
+                        continue
                     
-                    # Add new links to queue
-                    for link in page_data['links']:
-                        if link not in self.visited_urls:
-                            queue.append((link, depth + 1))
+                    self.visited_urls.add(url)
+                    page_data = await self.fetch_page(session, url)
+                    
+                    if page_data:
+                        self.pages_data.append(page_data)
+                        print(f"Crawled {len(self.pages_data)}/{len(urls_to_crawl)} pages: {url}")
+            else:
+                # Fallback to traditional link-based crawling
+                print("⚠️  No sitemap found, using traditional link-based crawling")
+                queue = [(self.base_url, 0)]  # (url, depth)
+                
+                while queue and len(self.visited_urls) < self.max_pages:
+                    url, depth = queue.pop(0)
+                    
+                    # Skip if already visited
+                    if url in self.visited_urls:
+                        continue
+                    
+                    # Only apply depth limit if not crawling all
+                    if not self.crawl_all and depth > self.depth_limit:
+                        continue
+                    
+                    self.visited_urls.add(url)
+                    page_data = await self.fetch_page(session, url)
+                    
+                    if page_data:
+                        self.pages_data.append(page_data)
+                        print(f"Crawled {len(self.pages_data)}/{self.max_pages if not self.crawl_all else '∞'} pages: {url}")
+                        
+                        # Add new links to queue
+                        for link in page_data['links']:
+                            if link not in self.visited_urls:
+                                queue.append((link, depth + 1))
         
         # Deduplicate pages by base URL (remove fragment duplicates)
         unique_pages = {}
@@ -1007,20 +1188,28 @@ The summary should be 2-3 sentences, explain the website's primary purpose, and 
             if section_name in sections:
                 pages = sorted(sections[section_name], key=lambda x: x['importance_score'], reverse=True)
                 
-                # Only include sections that have important pages
-                important_pages = [p for p in pages if p['importance_score'] > 0.3]
+                # Include all pages, but prioritize by importance score
+                # Lower threshold for large crawls to include more content
+                total_pages = len(self.pages_data)
+                
+                if total_pages > 200:
+                    # For very large crawls, include pages with score > 0.1
+                    important_pages = [p for p in pages if p['importance_score'] > 0.1]
+                elif total_pages > 100:
+                    # For large crawls, include pages with score > 0.15
+                    important_pages = [p for p in pages if p['importance_score'] > 0.15]
+                elif total_pages > 50:
+                    # For medium-large crawls, include pages with score > 0.2
+                    important_pages = [p for p in pages if p['importance_score'] > 0.2]
+                else:
+                    # For smaller crawls, use original threshold
+                    important_pages = [p for p in pages if p['importance_score'] > 0.3]
+                
                 if not important_pages:
                     continue
                 
-                # Limit pages per section for large crawls to manage AI processing
-                total_pages = len(self.pages_data)
-                if total_pages > 50:
-                    # For very large crawls, limit to top 5 pages per section
-                    important_pages = important_pages[:5]
-                elif total_pages > 20:
-                    # For medium crawls, limit to top 8 pages per section
-                    important_pages = important_pages[:8]
-                # For small crawls (<=20 pages), use all important pages
+                # Don't limit pages per section - include all important pages
+                # AI processing will be disabled for large crawls anyway
                 
                 # Create clean section with simple format
                 section_content = f"## {section_name}\n\n"
@@ -1033,7 +1222,12 @@ The summary should be 2-3 sentences, explain the website's primary purpose, and 
                     # Use AI-generated description if available, otherwise use intelligent fallback
                     final_description = self._generate_page_description(page)
                     
-                    section_content += f"- [{title}]({url}): {final_description}\n"
+                    # Add FAQ indicator if page has FAQs
+                    faq_indicator = ""
+                    if page.get('faqs') and len(page['faqs']) > 0:
+                        faq_indicator = f" [📋 {len(page['faqs'])} FAQs]"
+                    
+                    section_content += f"- [{title}]({url}): {final_description}{faq_indicator}\n"
                 
                 section_content += "\n"
                 
@@ -1042,13 +1236,13 @@ The summary should be 2-3 sentences, explain the website's primary purpose, and 
                 total_pages = len(self.pages_data)
                 
                 # Skip AI for less important sections if there are many pages
-                if total_pages > 50:
-                    # Only use AI for the most important sections
-                    priority_sections = ['Getting Started', 'Documentation', 'API Reference', 'News', 'Politics']
-                    should_use_ai = section_name in priority_sections
-                elif total_pages > 100:
+                if total_pages > 100:
                     # For very large crawls, skip AI enhancement entirely to avoid timeouts
                     should_use_ai = False
+                elif total_pages > 50:
+                    # Only use AI for the most important sections
+                    priority_sections = ['Getting Started', 'Documentation', 'API Reference', 'News', 'Politics', 'Products', 'Services']
+                    should_use_ai = section_name in priority_sections
                 
                 if should_use_ai:
                     cleaned_section = self.cleanup_with_openai(section_content, "section")
@@ -1062,15 +1256,21 @@ The summary should be 2-3 sentences, explain the website's primary purpose, and 
                 else:
                     content += section_content
         
-        # Add optional section for less important but potentially useful pages
-        optional_pages = [p for p in self.pages_data if p['importance_score'] <= 0.3 and p['importance_score'] > 0.1]
-        if optional_pages:
-            content += "## Optional\n\n"
-            for page in optional_pages[:5]:  # Limit to 5 optional pages
-                title = page['title']
-                url = page['url']
-                content += f"- [{title}]({url})\n"
-            content += "\n"
+        # Add section for additional pages that didn't make it into main sections
+        # Only for smaller crawls where this makes sense
+        if total_pages <= 100:
+            optional_pages = [p for p in self.pages_data if p['importance_score'] <= 0.3 and p['importance_score'] > 0.1]
+            if optional_pages:
+                content += "## Additional Resources\n\n"
+                for page in optional_pages[:10]:  # Include more optional pages
+                    title = page['title']
+                    url = page['url']
+                    description = page.get('description', '')[:100] if page.get('description') else ''
+                    if description:
+                        content += f"- [{title}]({url}): {description}\n"
+                    else:
+                        content += f"- [{title}]({url})\n"
+                content += "\n"
         
         return content
     
@@ -1085,6 +1285,14 @@ The summary should be 2-3 sentences, explain the website's primary purpose, and 
             content += f"URL: {page['url']}\n\n"
             if page['description']:
                 content += f"Description: {page['description']}\n\n"
+            
+            # Include FAQs if available
+            if page.get('faqs') and len(page['faqs']) > 0:
+                content += f"### FAQs ({len(page['faqs'])} questions)\n\n"
+                for faq in page['faqs']:
+                    content += f"**Q: {faq['question']}**\n\n"
+                    content += f"A: {faq['answer']}\n\n"
+                content += "\n"
             
             # Truncate very long content
             page_content = page['content'][:2000]
@@ -1294,7 +1502,8 @@ async def generate_llms_txt(request: CrawlRequest):
         crawler = WebsiteCrawler(
             str(request.url), 
             max_pages=request.max_pages,
-            depth_limit=request.depth_limit
+            depth_limit=request.depth_limit,
+            crawl_all=request.crawl_all
         )
         
         pages_data = await crawler.crawl()

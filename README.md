@@ -40,6 +40,9 @@ This README has been restructured for better user experience:
 ## ✨ Features
 
 ### Core Generation
+- **🗺️ Sitemap-First Crawling**: Automatically discovers ALL pages via sitemap.xml/sitemap_index.xml
+- **📋 FAQ Extraction**: Extracts FAQs from Schema.org JSON-LD markup for comprehensive documentation
+- **🎯 Two-Stage Workflow**: Generate summary first, then full-text with all pages
 - **Intelligent Website Crawling**: Automatically discovers and analyzes website pages
 - **AI-Enhanced Content**: Uses OpenAI to improve descriptions and organization
 - **Smart Categorization**: Dynamic section organization based on content themes
@@ -67,29 +70,51 @@ This README has been restructured for better user experience:
 git clone <your-repo-url> && cd llm_txt_creator
 ./start.sh
 
-# Open browser to http://localhost:3000
-# Enter a website URL (e.g., https://docs.anthropic.com)
-# Click "Generate llms.txt" and watch the magic! ✨
+# Open browser to http://localhost:3001 (or 3000)
+# Enter a website URL (e.g., https://obviousworks.ch)
+# Click "Generate llms.txt (Summary)" for quick overview
+# Click "Generate llms-full.txt (All Pages)" for complete documentation ✨
 ```
 
 ### What You'll See
-1. **Real-time crawling**: Pages discovered and analyzed live
-2. **AI enhancement**: Content improved and categorized automatically  
-3. **Dual outputs**: Both curated and comprehensive versions
-4. **Monitoring setup**: Add sites for automatic updates
+1. **Sitemap discovery**: Automatically finds and parses sitemap_index.xml
+2. **Complete crawling**: All pages from sitemap analyzed (e.g., 296 pages in 39 seconds)
+3. **FAQ extraction**: Automatically extracts FAQs from Schema.org markup
+4. **Real-time progress**: Pages discovered and analyzed live with progress indicators
+5. **AI enhancement**: Content improved and categorized automatically  
+6. **Dual outputs**: Both curated summary and comprehensive full-text versions
+7. **FAQ indicators**: Pages with FAQs marked with [📋 X FAQs] in summary
 
 ### Example Output
+
+**llms.txt (Summary):**
+```markdown
+# obviousworks.ch
+
+## Schulungen
+- [Certified Agile Requirements Specialist (CARS)](https://...): CARS Zertifizierung für agiles Requirements Engineering [📋 19 FAQs]
+- [Certified Professional for Requirements Engineering (CPRE)](https://...): Internationale IREB Zertifizierung
+
+## Dienstleistungen
+- [Requirements Engineering Services](https://...): Professionelle Unterstützung für Ihre Projekte
+...
 ```
-# Anthropic Documentation
-> AI safety company building reliable, interpretable, and steerable AI systems
 
-## Getting Started
-- Quickstart Guide - Essential setup and first API calls
-- Authentication - API key setup and security best practices
+**llms-full.txt (Complete):**
+```markdown
+## Certified Agile Requirements Specialist (CARS)
 
-## API Reference  
-- Messages API - Core conversational AI interface
-- Streaming - Real-time response handling
+URL: https://www.obviousworks.ch/schulungen/certified-agile-requirements-specialist-cars/
+
+### FAQs (19 questions)
+
+**Q: Was ist der Certified Agile Requirements Specialist (CARS)?**
+
+A: Der Certified Agile Requirements Specialist (CARS) ist eine Zertifizierung, die fundierte Kenntnisse...
+
+**Q: Was sind die Hauptinhalte des CARS-Trainings?**
+
+A: Das CARS-Training deckt eine Vielzahl von Themen ab, darunter: Grundlagen des Requirements Engineering...
 ...
 ```
 
@@ -112,6 +137,78 @@ git clone <your-repo-url> && cd llm_txt_creator
 - **Vercel Cron Jobs** - Automatic scheduling every 6 hours
 - **Change Detection** - Structure fingerprinting and diff analysis
 - **Smart Thresholds** - Updates only for significant changes (5%+)
+
+## 🆕 Recent Improvements & Features
+
+### Sitemap-First Crawling Strategy
+The crawler now prioritizes sitemap discovery for complete website coverage:
+
+1. **Sitemap Discovery Chain**:
+   - Checks `robots.txt` for sitemap location
+   - Tries common locations: `sitemap_index.xml`, `sitemap.xml`, etc.
+   - Recursively parses sitemap indexes and sub-sitemaps
+   - Falls back to link-based crawling if no sitemap found
+
+2. **Benefits**:
+   - ✅ Discovers ALL pages (no depth limit issues)
+   - ✅ Faster crawling (direct URL list)
+   - ✅ More reliable (no missed pages)
+   - ✅ Example: 296 pages from obviousworks.ch in 39 seconds
+
+### FAQ Extraction from Schema.org
+Automatically extracts structured FAQ data from JSON-LD markup:
+
+```html
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Your question here?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Your answer here"
+      }
+    }
+  ]
+}
+</script>
+```
+
+**Features**:
+- Extracts all Q&A pairs from FAQPage schema
+- Includes FAQs in `llms-full.txt` with dedicated section
+- Marks pages with FAQs in summary: `[📋 X FAQs]`
+- Boosts importance score for FAQ-rich pages (+0.02 per FAQ, max +0.3)
+
+### Two-Stage Generation Workflow
+New UI with separate buttons for different use cases:
+
+1. **Generate llms.txt (Summary)** - Blue Button
+   - Quick overview with most important pages
+   - Adaptive filtering based on crawl size
+   - For 296 pages: includes pages with score > 0.15
+   - AI enhancement for key sections
+
+2. **Generate llms-full.txt (All Pages)** - Green Button
+   - Complete documentation with ALL crawled pages
+   - Includes full FAQ sections
+   - No filtering or limits
+   - Perfect for comprehensive LLM context
+
+### Adaptive Content Filtering
+Smart thresholds based on website size:
+
+| Pages Crawled | Importance Threshold | Pages per Section |
+|---------------|---------------------|-------------------|
+| ≤ 50          | > 0.3               | All important     |
+| 51-100        | > 0.2               | All important     |
+| 101-200       | > 0.15              | All important     |
+| 200+          | > 0.1               | All important     |
+
+**No more artificial limits** - all important pages are included!
 
 ## 📁 Project Structure
 
@@ -815,6 +912,67 @@ cat vercel.json | python -m json.tool
 - Cron runs every 6 hours
 - Only updates sites with significant changes (5%+)
 - Updates multiple sites efficiently in single execution
-- Completes within 15-minute timeout limit 
+- Completes within 15-minute timeout limit
+
+## 📝 Changelog
+
+### Version 2.0.0 (2025-10-07)
+
+#### 🚀 Major Features
+- **Sitemap-First Crawling**: Complete website coverage via sitemap.xml/sitemap_index.xml
+  - Automatically discovers and parses sitemap indexes
+  - Recursively fetches all sub-sitemaps
+  - Falls back to link-based crawling if no sitemap found
+  - Example: 296 pages crawled from obviousworks.ch in 39 seconds
+
+- **FAQ Extraction**: Schema.org JSON-LD support
+  - Extracts FAQs from FAQPage markup
+  - Includes Q&A pairs in llms-full.txt
+  - Marks pages with FAQ indicator in summary: `[📋 X FAQs]`
+  - Boosts importance score for FAQ-rich pages
+
+- **Two-Stage Workflow**: Separate generation modes
+  - Blue button: Generate llms.txt (Summary) - curated overview
+  - Green button: Generate llms-full.txt (All Pages) - complete documentation
+  - Independent generation with separate loading states
+
+#### 🔧 Improvements
+- **Adaptive Content Filtering**: Smart thresholds based on website size
+  - 200+ pages: includes pages with score > 0.1
+  - 101-200 pages: includes pages with score > 0.15
+  - 51-100 pages: includes pages with score > 0.2
+  - ≤50 pages: includes pages with score > 0.3
+
+- **No More Artificial Limits**: Removed per-section page limits
+  - All important pages are now included
+  - Better coverage for large websites
+  - More comprehensive documentation
+
+- **Enhanced UI**: Improved user experience
+  - Separate buttons for summary and full-text generation
+  - Clear progress indicators for each mode
+  - FAQ count displayed in page listings
+  - Better error handling and messaging
+
+#### 🐛 Bug Fixes
+- Fixed depth limit issue preventing complete crawls
+- Fixed page filtering that excluded too many pages
+- Improved sitemap parsing for various formats
+- Better handling of large website crawls (200+ pages)
+
+#### 📚 Documentation
+- Updated README with new features and examples
+- Added sitemap crawling strategy documentation
+- Added FAQ extraction examples
+- Added adaptive filtering table
+- Updated quick start guide with new workflow
+
+### Version 1.0.0 (Initial Release)
+- Basic website crawling with link following
+- AI-enhanced content generation
+- Dual file generation (llms.txt and llms-full.txt)
+- Automated monitoring with change detection
+- Next.js frontend with Tailwind CSS
+- FastAPI backend with OpenAI integration
 
 Built with ❤️ for the llms.txt standard and automated monitoring!

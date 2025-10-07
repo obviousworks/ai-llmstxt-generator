@@ -85,16 +85,26 @@ const normalizeUrl = (inputUrl: string): string => {
 export default function Home() {
   const [url, setUrl] = useState('')
   const [maxPages, setMaxPages] = useState(20)
+  const [crawlAll, setCrawlAll] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingFulltext, setIsLoadingFulltext] = useState(false)
   const [result, setResult] = useState<GenerationResult | null>(null)
+  const [fulltextResult, setFulltextResult] = useState<GenerationResult | null>(null)
   const [error, setError] = useState('')
+  const [fulltextError, setFulltextError] = useState('')
 
-  const generateLLMSText = async () => {
+  const generateLLMSText = async (fulltext: boolean = false) => {
     if (!url) return
 
-    setIsLoading(true)
-    setError('')
-    setResult(null)
+    if (fulltext) {
+      setIsLoadingFulltext(true)
+      setFulltextError('')
+      setFulltextResult(null)
+    } else {
+      setIsLoading(true)
+      setError('')
+      setResult(null)
+    }
 
     try {
       // Normalize the URL to ensure it has a protocol
@@ -117,8 +127,10 @@ export default function Home() {
         },
         body: JSON.stringify({
           url: normalizedUrl,
-          max_pages: maxPages,
-          depth_limit: 3
+          max_pages: fulltext ? 999999 : maxPages,
+          depth_limit: fulltext ? 999 : 3,
+          crawl_all: fulltext || crawlAll,
+          generation_type: fulltext ? 'fulltext' : 'summary'
         }),
       })
 
@@ -151,12 +163,25 @@ export default function Home() {
       }
 
       const data: GenerationResult = JSON.parse(responseText)
-      setResult(data)
+      if (fulltext) {
+        setFulltextResult(data)
+      } else {
+        setResult(data)
+      }
     } catch (err) {
       console.error('Full error:', err)
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      const errorMsg = err instanceof Error ? err.message : 'An error occurred'
+      if (fulltext) {
+        setFulltextError(errorMsg)
+      } else {
+        setError(errorMsg)
+      }
     } finally {
-      setIsLoading(false)
+      if (fulltext) {
+        setIsLoadingFulltext(false)
+      } else {
+        setIsLoading(false)
+      }
     }
   }
 
@@ -225,14 +250,14 @@ export default function Home() {
 
                 <div>
                   <label htmlFor="maxPages" className="block text-sm font-medium text-gray-700 mb-2">
-                    Maximum Pages to Crawl
+                    Maximum Pages to Crawl (for Summary)
                   </label>
                   <select
                     id="maxPages"
                     value={maxPages}
                     onChange={(e) => setMaxPages(Number(e.target.value))}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    disabled={isLoading}
+                    disabled={isLoading || isLoadingFulltext}
                   >
                     <option value={10}>10 pages</option>
                     <option value={20}>20 pages (recommended)</option>
@@ -241,31 +266,75 @@ export default function Home() {
                   </select>
                 </div>
 
-                <button
-                  onClick={generateLLMSText}
-                  disabled={!url || isLoading}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <FileText className="w-5 h-5" />
-                      Generate llms.txt
-                    </>
-                  )}
-                </button>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="crawlAll"
+                    checked={crawlAll}
+                    onChange={(e) => setCrawlAll(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    disabled={isLoading || isLoadingFulltext}
+                  />
+                  <label htmlFor="crawlAll" className="ml-2 text-sm text-gray-700">
+                    Crawl all pages (ignores page limit for summary)
+                  </label>
+                </div>
+
+                <div className="space-y-3">
+                  <button
+                    onClick={() => generateLLMSText(false)}
+                    disabled={!url || isLoading || isLoadingFulltext}
+                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Generating Summary...
+                      </>
+                    ) : (
+                      <>
+                        <FileText className="w-5 h-5" />
+                        Generate llms.txt (Summary)
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => generateLLMSText(true)}
+                    disabled={!url || isLoading || isLoadingFulltext}
+                    className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 px-6 rounded-lg font-medium hover:from-green-700 hover:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+                  >
+                    {isLoadingFulltext ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Crawling All Pages...
+                      </>
+                    ) : (
+                      <>
+                        <FileText className="w-5 h-5" />
+                        Generate llms-full.txt (All Pages)
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
 
               {error && (
                 <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
                   <div>
-                    <h3 className="text-sm font-medium text-red-800">Error</h3>
+                    <h3 className="text-sm font-medium text-red-800">Error (Summary)</h3>
                     <p className="text-sm text-red-700 mt-1">{error}</p>
+                  </div>
+                </div>
+              )}
+
+              {fulltextError && (
+                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="text-sm font-medium text-red-800">Error (Fulltext)</h3>
+                    <p className="text-sm text-red-700 mt-1">{fulltextError}</p>
                   </div>
                 </div>
               )}
@@ -296,53 +365,76 @@ export default function Home() {
 
           {/* Right Column - Results */}
           <div className="space-y-6">
-            {result && (
+            {(result || fulltextResult) && (
               <>
-                {/* Generation Success */}
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h3 className="text-sm font-medium text-green-800">
-                      {result.used_existing ? 'Found Existing llms.txt' : 'Generation Complete'}
-                    </h3>
-                    <p className="text-sm text-green-700 mt-1">
-                      {result.used_existing 
-                        ? 'Using existing llms.txt file found on the website'
-                        : `Analyzed ${result.pages_analyzed.length} pages in ${result.generation_time.toFixed(2)} seconds`
-                      }
-                      {result.ai_enhanced && !result.used_existing && (
-                        <span className="block">Enhanced with AI ({result.ai_model})</span>
-                      )}
-                    </p>
+                {/* Generation Success - Summary */}
+                {result && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h3 className="text-sm font-medium text-blue-800">
+                        Summary Generation Complete
+                      </h3>
+                      <p className="text-sm text-blue-700 mt-1">
+                        Analyzed {result.pages_analyzed.length} pages in {result.generation_time.toFixed(2)} seconds
+                        {result.ai_enhanced && (
+                          <span className="block">Enhanced with AI ({result.ai_model})</span>
+                        )}
+                      </p>
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* Generation Success - Fulltext */}
+                {fulltextResult && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h3 className="text-sm font-medium text-green-800">
+                        Fulltext Generation Complete
+                      </h3>
+                      <p className="text-sm text-green-700 mt-1">
+                        Crawled ALL {fulltextResult.pages_analyzed.length} pages in {fulltextResult.generation_time.toFixed(2)} seconds
+                        {fulltextResult.ai_enhanced && (
+                          <span className="block">Enhanced with AI ({fulltextResult.ai_model})</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Download Buttons */}
                 <div className="bg-white rounded-xl shadow-sm border p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Download Files</h3>
                   <div className="space-y-3">
-                    <button
-                      onClick={() => downloadFile(result.llms_txt, 'llms.txt')}
-                      className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                    >
-                      <Download className="w-5 h-5" />
-                      Download llms.txt
-                    </button>
-                    <button
-                      onClick={() => downloadFile(result.llms_full_txt, 'llms-full.txt')}
-                      className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
-                    >
-                      <Download className="w-5 h-5" />
-                      Download llms-full.txt
-                    </button>
+                    {result && (
+                      <button
+                        onClick={() => downloadFile(result.llms_txt, 'llms.txt')}
+                        className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <Download className="w-5 h-5" />
+                        Download llms.txt (Summary)
+                      </button>
+                    )}
+                    {fulltextResult && (
+                      <button
+                        onClick={() => downloadFile(fulltextResult.llms_full_txt, 'llms-full.txt')}
+                        className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <Download className="w-5 h-5" />
+                        Download llms-full.txt (All Pages)
+                      </button>
+                    )}
                   </div>
                 </div>
 
                 {/* Pages Analyzed */}
                 <div className="bg-white rounded-xl shadow-sm border p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Pages Analyzed</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Pages Analyzed {fulltextResult ? '(Fulltext - All Pages)' : '(Summary)'}
+                  </h3>
                   <div className="space-y-3 max-h-96 overflow-y-auto">
-                    {result.pages_analyzed.map((page, index) => (
+                    {(fulltextResult || result)?.pages_analyzed.map((page, index) => (
                       <div key={index} className="p-3 border border-gray-200 rounded-lg">
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
@@ -367,12 +459,23 @@ export default function Home() {
                 </div>
 
                 {/* Preview */}
-                <div className="bg-white rounded-xl shadow-sm border p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">llms.txt Preview</h3>
-                  <div className="bg-gray-50 rounded-lg p-4 text-sm font-mono max-h-96 overflow-y-auto">
-                    <pre className="whitespace-pre-wrap text-gray-800">{result.llms_txt}</pre>
+                {result && (
+                  <div className="bg-white rounded-xl shadow-sm border p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">llms.txt Preview (Summary)</h3>
+                    <div className="bg-gray-50 rounded-lg p-4 text-sm font-mono max-h-96 overflow-y-auto">
+                      <pre className="whitespace-pre-wrap text-gray-800">{result.llms_txt}</pre>
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {fulltextResult && (
+                  <div className="bg-white rounded-xl shadow-sm border p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">llms-full.txt Preview (All Pages)</h3>
+                    <div className="bg-gray-50 rounded-lg p-4 text-sm font-mono max-h-96 overflow-y-auto">
+                      <pre className="whitespace-pre-wrap text-gray-800">{fulltextResult.llms_full_txt}</pre>
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>
