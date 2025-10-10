@@ -186,8 +186,12 @@ export default function Home() {
   }
 
   const downloadFile = (content: string, filename: string) => {
-    // Ensure UTF-8 encoding to prevent umlauts issues in downloads
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+    // Add UTF-8 BOM (Byte Order Mark) to ensure proper encoding in browsers
+    const BOM = '\uFEFF'
+    const contentWithBOM = BOM + content
+    
+    // Create blob with explicit UTF-8 encoding
+    const blob = new Blob([contentWithBOM], { type: 'text/plain;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
