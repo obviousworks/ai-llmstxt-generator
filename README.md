@@ -928,6 +928,18 @@ cat vercel.json | python -m json.tool
 
 ---
 
+### Version 2.1.1 - UTF-8 BOM Fix for Browser Compatibility
+**Release Date: October 10, 2025**
+
+#### 🐛 Bug Fixes
+- **UTF-8 BOM**: Added Byte Order Mark to downloaded files for browser compatibility
+  - Fixes umlauts display issues when opening files in browsers
+  - Prevents garbled text like `fÃ¼r` → `für` in browser-opened files
+  - Files opened in text editors (vi, nano, etc.) remain unaffected
+  - Improves user experience for browser-based file viewing
+
+---
+
 ### Version 2.1.0 - Help System & User Guidance
 **Release Date: October 10, 2025**
 
