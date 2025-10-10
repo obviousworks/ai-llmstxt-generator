@@ -131,8 +131,9 @@ class WebsiteCrawler:
                 if response.status != 200:
                     return None
                 
-                content = await response.text()
-                soup = BeautifulSoup(content, 'html.parser')
+                # Ensure UTF-8 encoding to prevent umlauts issues
+                content = await response.text(encoding='utf-8')
+                soup = BeautifulSoup(content, 'html.parser', from_encoding='utf-8')
                 
                 # Extract metadata
                 title = soup.find('title')
@@ -590,7 +591,7 @@ Provide assignments for each page index and explain your reasoning."""
             robots_url = f"{self.base_url.rstrip('/')}/robots.txt"
             async with session.get(robots_url, timeout=aiohttp.ClientTimeout(total=10), ssl=self.ssl_context) as response:
                 if response.status == 200:
-                    robots_content = await response.text()
+                    robots_content = await response.text(encoding='utf-8')
                     for line in robots_content.split('\n'):
                         if line.lower().startswith('sitemap:'):
                             sitemap_url = line.split(':', 1)[1].strip()
@@ -605,7 +606,7 @@ Provide assignments for each page index and explain your reasoning."""
                 print(f"Trying sitemap: {sitemap_url}")
                 async with session.get(sitemap_url, timeout=aiohttp.ClientTimeout(total=15), ssl=self.ssl_context) as response:
                     if response.status == 200:
-                        content = await response.text()
+                        content = await response.text(encoding='utf-8')
                         sitemap_urls_found = await self._parse_sitemap(content, session)
                         urls.update(sitemap_urls_found)
                         if sitemap_urls_found:
@@ -637,7 +638,7 @@ Provide assignments for each page index and explain your reasoning."""
                     try:
                         async with session.get(sub_sitemap_url, timeout=aiohttp.ClientTimeout(total=15), ssl=self.ssl_context) as response:
                             if response.status == 200:
-                                sub_content = await response.text()
+                                sub_content = await response.text(encoding='utf-8')
                                 sub_urls = await self._parse_sitemap(sub_content, session)
                                 urls.update(sub_urls)
                                 print(f"  ✓ Parsed sub-sitemap: {sub_sitemap_url} ({len(sub_urls)} URLs)")
@@ -790,7 +791,7 @@ Provide assignments for each page index and explain your reasoning."""
                             if response.status == 200:
                                 content_type = response.headers.get('content-type', '').lower()
                                 if any(ct in content_type for ct in ['text/', 'application/octet-stream']):
-                                    content = await response.text()
+                                    content = await response.text(encoding='utf-8')
                                     if content.strip() and len(content) > 50:  # Basic validation
                                         print(f"Found existing llms.txt at {llms_url}")
                                         return content
