@@ -35,6 +35,7 @@ interface GenerationResult {
   ai_enhanced: boolean
   ai_model: string | null
   used_existing?: boolean
+  existing_files_found?: { [key: string]: string }
 }
 
 // Get API URL - use environment variable, or detect if we're in development vs production
@@ -92,8 +93,10 @@ export default function Home() {
   const [fulltextResult, setFulltextResult] = useState<GenerationResult | null>(null)
   const [error, setError] = useState('')
   const [fulltextError, setFulltextError] = useState('')
+  const [existingFiles, setExistingFiles] = useState<{ [key: string]: string } | null>(null)
+  const [showExistingDialog, setShowExistingDialog] = useState(false)
 
-  const generateLLMSText = async (fulltext: boolean = false) => {
+  const generateLLMSText = async (fulltext: boolean = false, forceRegenerate: boolean = false) => {
     if (!url) return
 
     if (fulltext) {
@@ -130,7 +133,8 @@ export default function Home() {
           max_pages: fulltext ? 999999 : maxPages,
           depth_limit: fulltext ? 999 : 3,
           crawl_all: fulltext || crawlAll,
-          generation_type: fulltext ? 'fulltext' : 'summary'
+          generation_type: fulltext ? 'fulltext' : 'summary',
+          force_regenerate: forceRegenerate
         }),
       })
 
@@ -163,6 +167,14 @@ export default function Home() {
       }
 
       const data: GenerationResult = JSON.parse(responseText)
+      
+      // Check if existing files were found and user hasn't forced regeneration
+      if (data.existing_files_found && !forceRegenerate) {
+        setExistingFiles(data.existing_files_found)
+        setShowExistingDialog(true)
+        return
+      }
+      
       if (fulltext) {
         setFulltextResult(data)
       } else {
@@ -202,6 +214,55 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      {/* Existing Files Dialog */}
+      {showExistingDialog && existingFiles && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Existing Files Found
+            </h3>
+            <p className="text-gray-600 mb-4">
+              This website already has the following llms.txt files:
+            </p>
+            <ul className="list-disc list-inside text-sm text-gray-700 mb-6">
+              {Object.keys(existingFiles).map(filename => (
+                <li key={filename}>{filename}</li>
+              ))}
+            </ul>
+            <div className="flex flex-col gap-3">
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowExistingDialog(false)
+                    generateLLMSText(false, true)
+                  }}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Generate New Summary
+                </button>
+                <button
+                  onClick={() => {
+                    setShowExistingDialog(false)
+                    generateLLMSText(true, true)
+                  }}
+                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  Generate New Full-Text
+                </button>
+              </div>
+              <button
+                onClick={() => {
+                  setShowExistingDialog(false)
+                  setExistingFiles(null)
+                }}
+                className="w-full px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 py-6">

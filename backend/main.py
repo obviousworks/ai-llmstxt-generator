@@ -47,6 +47,7 @@ class CrawlRequest(BaseModel):
     depth_limit: Optional[int] = 3
     crawl_all: Optional[bool] = False
     generation_type: Optional[Literal["summary", "fulltext", "both"]] = "both"
+    force_regenerate: Optional[bool] = False
 
 class PageInfo(BaseModel):
     url: str
@@ -64,6 +65,7 @@ class LLMSTxtResponse(BaseModel):
     ai_enhanced: bool
     ai_model: Optional[str]
     used_existing: Optional[bool] = False
+    existing_files_found: Optional[Dict[str, str]] = None
     site_characteristics: Optional[Dict] = None
 
 class PageAnalysis(BaseModel):
@@ -763,13 +765,13 @@ Provide assignments for each page index and explain your reasoning."""
         
         return self.pages_data
     
-    async def check_existing_llms_txt(self, base_url: str) -> Optional[str]:
-        """Check if the website already has an llms.txt file"""
+    async def check_existing_llms_txt(self, base_url: str, filename: str = 'llms.txt') -> Optional[str]:
+        """Check if the website already has an llms.txt or llms-full.txt file"""
         try:
-            # Try common locations for llms.txt
+            # Try common locations for the specified file
             possible_urls = [
-                f"{base_url.rstrip('/')}/llms.txt",
-                f"{base_url.rstrip('/')}/.well-known/llms.txt",
+                f"{base_url.rstrip('/')}/{filename}",
+                f"{base_url.rstrip('/')}/.well-known/{filename}",
             ]
             
             connector = aiohttp.TCPConnector(ssl=self.ssl_context)
@@ -793,7 +795,7 @@ Provide assignments for each page index and explain your reasoning."""
                                 if any(ct in content_type for ct in ['text/', 'application/octet-stream']):
                                     content = await response.text(encoding='utf-8')
                                     if content.strip() and len(content) > 50:  # Basic validation
-                                        print(f"Found existing llms.txt at {llms_url}")
+                                        print(f"Found existing {filename} at {llms_url}")
                                         return content
                     except Exception as e:
                         print(f"Error checking {llms_url}: {e}")
@@ -1477,26 +1479,39 @@ async def generate_llms_txt(request: CrawlRequest):
         # Initialize crawler for checking existing llms.txt
         crawler = WebsiteCrawler(str(request.url))
         
-        # First, check if the website already has an llms.txt file
+        # Check if the website already has llms.txt files
+        existing_files = {}
         existing_llms_txt = await crawler.check_existing_llms_txt(str(request.url))
         if existing_llms_txt:
-            pages_info = [PageInfo(
-                url=f"{str(request.url).rstrip('/')}/llms.txt",
-                title='Existing llms.txt',
-                description='Found existing llms.txt file on the website',
-                content_length=len(existing_llms_txt),
-                importance_score=1.0,
-                section='Existing Documentation'
-            )]
+            existing_files['llms.txt'] = existing_llms_txt
+        
+        # Check for llms-full.txt as well
+        existing_llms_full_txt = await crawler.check_existing_llms_txt(str(request.url), filename='llms-full.txt')
+        if existing_llms_full_txt:
+            existing_files['llms-full.txt'] = existing_llms_full_txt
+        
+        # If existing files found and user hasn't forced regeneration, return existing files info
+        if existing_files and not request.force_regenerate:
+            pages_info = []
+            for filename, content in existing_files.items():
+                pages_info.append(PageInfo(
+                    url=f"{str(request.url).rstrip('/')}/{filename}",
+                    title=f'Existing {filename}',
+                    description=f'Found existing {filename} file on the website',
+                    content_length=len(content),
+                    importance_score=1.0,
+                    section='Existing Documentation'
+                ))
             
             return LLMSTxtResponse(
-                llms_txt=existing_llms_txt,
-                llms_full_txt=existing_llms_txt,
+                llms_txt=existing_files.get('llms.txt', ''),
+                llms_full_txt=existing_files.get('llms-full.txt', existing_files.get('llms.txt', '')),
                 pages_analyzed=pages_info,
                 generation_time=time.time() - start_time,
                 ai_enhanced=False,
                 ai_model=None,
-                used_existing=True
+                used_existing=True,
+                existing_files_found=existing_files
             )
         
         # Crawl the website
