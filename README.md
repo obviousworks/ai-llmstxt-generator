@@ -928,6 +928,19 @@ cat vercel.json | python -m json.tool
 
 ---
 
+### Version 2.0.1 - UTF-8 Encoding Fix
+**Release Date: October 10, 2025**
+
+#### 🐛 Bug Fixes
+- **UTF-8 Encoding**: Fixed umlauts and special characters encoding issues
+  - Set explicit UTF-8 encoding for all HTTP responses
+  - Fixed BeautifulSoup parsing with UTF-8 encoding
+  - Ensured download files use UTF-8 charset
+  - Prevents garbled text like `FÃ¤higkeiten` → `Fähigkeiten`
+  - Affects: Page content, FAQ extraction, sitemap parsing, file downloads
+
+---
+
 ### Version 2.0.0 - ObviousWorks Enhanced Fork
 **Release Date: October 7, 2025**
 
