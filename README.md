@@ -928,6 +928,20 @@ cat vercel.json | python -m json.tool
 
 ---
 
+### Version 2.1.0 - Help System & User Guidance
+**Release Date: October 10, 2025**
+
+#### 🚀 New Features
+- **Comprehensive Help Page**: Added `/help` route with detailed setup instructions
+  - Complete AI features explanation and benefits
+  - Step-by-step OpenAI API key setup for local and production
+  - Monitoring system documentation and limitations
+  - Clear guidance on what works with/without AI enhancement
+- **Enhanced Navigation**: Added help link to main page header
+- **User Onboarding**: Clear documentation for new users
+
+---
+
 ### Version 2.0.1 - UTF-8 Encoding Fix
 **Release Date: October 10, 2025**
 
