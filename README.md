@@ -1,6 +1,14 @@
 # 🤖 LLMs.txt Generator with Automated Monitoring
 
+> **Enhanced Fork by ObviousWorks** - Extended with sitemap-first crawling, FAQ extraction, and advanced features
+
 An intelligent web application that generates `llms.txt` files for websites and automatically monitors them for changes. This tool follows the [llms.txt specification](https://llmstxt.org/) to create AI-friendly documentation files that help Large Language Models better understand website content.
+
+**🌟 This fork includes exclusive features:**
+- 🗺️ Sitemap-first crawling for complete website coverage
+- 📋 Automatic FAQ extraction from Schema.org markup
+- 🎯 Two-stage generation workflow (summary + full-text)
+- 📊 Adaptive content filtering based on website size
 
 ## 🆕 Improved Documentation Structure
 
@@ -235,7 +243,7 @@ llm_txt_creator/                   # Root project directory
 ```
 
 ### How The Two APIs Work Together
-
+  
 **Development Mode (Local):**
 ```
 Frontend (localhost:3000) 
@@ -916,9 +924,14 @@ cat vercel.json | python -m json.tool
 
 ## 📝 Changelog
 
-### Version 2.0.0 (2025-10-07)
+> **Note**: All features are documented with implementation dates for tracking and reference.
 
-#### 🚀 Major Features
+---
+
+### Version 2.0.0 - ObviousWorks Enhanced Fork
+**Release Date: October 7, 2025**
+
+#### 🚀 Major Features Added
 - **Sitemap-First Crawling**: Complete website coverage via sitemap.xml/sitemap_index.xml
   - Automatically discovers and parses sitemap indexes
   - Recursively fetches all sub-sitemaps
@@ -967,7 +980,12 @@ cat vercel.json | python -m json.tool
 - Added adaptive filtering table
 - Updated quick start guide with new workflow
 
-### Version 1.0.0 (Initial Release)
+---
+
+### Version 1.0.0 - Base Fork
+**Release Date: October 2025**
+
+Forked from [rdyplayerB/ai-llmstxt-generator](https://github.com/rdyplayerB/ai-llmstxt-generator) with the following base features:
 - Basic website crawling with link following
 - AI-enhanced content generation
 - Dual file generation (llms.txt and llms-full.txt)
@@ -975,4 +993,21 @@ cat vercel.json | python -m json.tool
 - Next.js frontend with Tailwind CSS
 - FastAPI backend with OpenAI integration
 
-Built with ❤️ for the llms.txt standard and automated monitoring!
+---
+
+## 🎯 Future Development
+
+This fork is actively maintained by ObviousWorks. Future features will be documented here with implementation dates.
+
+**Planned Features:**
+- [ ] Multi-language support for FAQ extraction
+- [ ] Enhanced AI categorization with custom prompts
+- [ ] Batch processing for multiple websites
+- [ ] Export to additional formats (JSON, XML)
+- [ ] Advanced analytics dashboard
+
+---
+
+Built with ❤️ by [ObviousWorks](https://obviousworks.ch) for the llms.txt standard.
+
+**Original Project**: [rdyplayerB/ai-llmstxt-generator](https://github.com/rdyplayerB/ai-llmstxt-generator)
