@@ -928,6 +928,24 @@ cat vercel.json | python -m json.tool
 
 ---
 
+### Version 2.2.0 - Existing Files Detection & Regeneration
+**Release Date: October 10, 2025**
+
+#### 🚀 New Features
+- **Existing Files Detection**: Automatically detects existing llms.txt and llms-full.txt files
+  - Checks both root directory and .well-known/ locations
+  - Shows user-friendly dialog when existing files are found
+  - Lists all detected files with clear options
+- **Regeneration Choice**: User can choose to generate new files or cancel
+  - "Generate New Summary" button for llms.txt regeneration
+  - "Generate New Full-Text" button for llms-full.txt regeneration
+  - "Cancel" option to keep existing files
+- **Enhanced Backend**: Added `force_regenerate` parameter to API
+  - Prevents automatic stopping when existing files detected
+  - Improved user control over generation process
+
+---
+
 ### Version 2.1.1 - UTF-8 BOM Fix for Browser Compatibility
 **Release Date: October 10, 2025**
 
