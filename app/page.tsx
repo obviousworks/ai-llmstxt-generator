@@ -172,6 +172,12 @@ export default function Home() {
       if (data.existing_files_found && !forceRegenerate) {
         setExistingFiles(data.existing_files_found)
         setShowExistingDialog(true)
+        // Reset loading states when showing dialog
+        if (fulltext) {
+          setIsLoadingFulltext(false)
+        } else {
+          setIsLoading(false)
+        }
         return
       }
       

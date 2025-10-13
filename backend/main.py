@@ -81,7 +81,6 @@ class SiteAnalysis(BaseModel):
     site_purpose: str = Field(description="Primary purpose and nature of this website")
     target_audience: str = Field(description="Primary intended audience for this site")
     main_categories: List[str] = Field(description="3-8 logical content categories that best organize this site's pages")
-    category_descriptions: Dict[str, str] = Field(description="Brief description of what each category contains")
     site_summary: str = Field(description="2-3 sentence summary of what this website offers")
 
 class CategoryAssignment(BaseModel):
@@ -536,9 +535,6 @@ For each page, determine its category, content type, importance factors, descrip
 
 Site Purpose: {site_analysis.site_purpose}
 Available Categories: {', '.join(site_analysis.main_categories)}
-
-Category Descriptions:
-{json.dumps(site_analysis.category_descriptions, indent=2)}
 
 Assign each page to the most appropriate category based on its content and purpose."""
                 },
