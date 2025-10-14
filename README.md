@@ -1,6 +1,6 @@
-# 🤖 LLMs.txt Generator with Automated Monitoring
+# 🤖 LLMs.txt Generator - by ObviousWorks.ch
 
-> **Enhanced Fork by ObviousWorks** - Extended with sitemap-first crawling, FAQ extraction, and advanced features
+> **"Let the LLMs eat your content!"** - This is an enhanced fork of the AI LLMs.txt Generator that revolutionizes website documentation extraction with sitemap-first crawling, FAQ detection, and intelligent content processing - making your content perfectly digestible for Large Language Models.
 
 An intelligent web application that generates `llms.txt` files for websites and automatically monitors them for changes. This tool follows the [llms.txt specification](https://llmstxt.org/) to create AI-friendly documentation files that help Large Language Models better understand website content.
 
@@ -1062,6 +1062,31 @@ This fork is actively maintained by ObviousWorks. Future features will be docume
 - [ ] Batch processing for multiple websites
 - [ ] Export to additional formats (JSON, XML)
 - [ ] Advanced analytics dashboard
+
+---
+
+## 🏢 About ObviousWorks
+
+**ObviousWorks** is Switzerland's leading expert in Requirements Engineering (IREB®), Agile methodologies, and AI/LLM integration for software development. We bridge the gap between traditional software engineering and the AI-powered future.
+
+### 🧠 Our AI & LLM Training Programs
+- **[AI Masterclass](https://www.obviousworks.ch/schulungen/ai-masterclass/)** - Perfect introduction to generative AI
+- **[ChatGPT 101 for Beginners](https://www.obviousworks.ch/schulungen/chatgpt-101/)** - Save hours of work with AI
+- **[Getting Started with Generative AI](https://www.obviousworks.ch/schulungen/generative-ai-getting-started/)** - Boost productivity with AI tools
+- **[ChatGPT Coding](https://www.obviousworks.ch/schulungen/chatgpt-coding/)** - AI-powered development workflows
+- **[ChatGPT Advanced](https://www.obviousworks.ch/schulungen/chatgpt-advanced/)** - Enterprise-grade LLM integration
+- **[Generative AI for Software Development](https://www.obviousworks.ch/schulungen/generative-ai-fuer-effiziente-softwareentwicklung/)** - Full-stack AI implementation
+- **[AI Requirements Engineering](https://www.obviousworks.ch/schulungen/ai-requirements-engineering/)** - RE in AI-driven environments
+- **[AI Developer Bootcamp](https://www.obviousworks.ch/schulungen/ai-developer-bootcamp/)** - End-to-end AI development lifecycle
+
+### 🎓 Certification Programs
+- **[IREB® CPRE with AI Modules](https://www.obviousworks.ch/schulungen/ireb-cpre-foundation/)** - Requirements Engineering certification
+- **[CARS® with AI Prioritization](https://www.obviousworks.ch/schulungen/agile-requirements-specialist/)** - Agile Requirements Specialist
+
+### 🔗 Connect With Us
+- **Website**: [obviousworks.ch](https://www.obviousworks.ch/)
+- **GitHub**: [github.com/obviousworks](https://github.com/obviousworks)
+- **Services**: AI Transformation Implementation, Enterprise LLM Integration
 
 ---
 
