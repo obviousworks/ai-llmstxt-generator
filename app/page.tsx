@@ -278,8 +278,8 @@ export default function Home() {
                 <FileText className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">LLMs.txt Generator</h1>
-                <p className="text-sm text-gray-600">Automated llms.txt file generation for websites</p>
+                <h1 className="text-2xl font-bold text-gray-900">LLMs.txt Generator - by obviousworks.ch</h1>
+                <p className="text-sm text-gray-600">Automated llms.txt file generation for websites - let the LLMs eat your content!</p>
               </div>
             </div>
             <nav className="flex gap-3">
@@ -299,6 +299,15 @@ export default function Home() {
           </div>
         </div>
       </header>
+
+      {/* Project Summary */}
+      <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-b">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <blockquote className="text-lg text-gray-700 italic border-l-4 border-blue-500 pl-4">
+            "This is an enhanced fork of the AI LLMs.txt Generator that revolutionizes website documentation extraction with sitemap-first crawling, FAQ detection, and intelligent content processing - making your content perfectly digestible for Large Language Models."
+          </blockquote>
+        </div>
+      </div>
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -560,8 +569,63 @@ export default function Home() {
         </div>
       </main>
 
+      {/* About ObviousWorks */}
+      <section className="bg-gray-50 border-t mt-16">
+        <div className="max-w-7xl mx-auto px-4 py-12">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">About ObviousWorks</h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              We are Switzerland's leading experts in Requirements Engineering (IREB®), Agile methodologies, and AI/LLM integration for software development. 
+              Our mission is to bridge the gap between traditional software engineering and the AI-powered future.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-white rounded-lg p-6 shadow-sm">
+              <h3 className="font-semibold text-gray-900 mb-3">🧠 AI & LLM Training</h3>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>• <a href="https://www.obviousworks.ch/schulungen/ai-masterclass/" className="hover:text-blue-600">AI Masterclass</a></li>
+                <li>• <a href="https://www.obviousworks.ch/schulungen/chatgpt-101/" className="hover:text-blue-600">ChatGPT 101 for Beginners</a></li>
+                <li>• <a href="https://www.obviousworks.ch/schulungen/generative-ai-getting-started/" className="hover:text-blue-600">Getting Started with Generative AI</a></li>
+                <li>• <a href="https://www.obviousworks.ch/schulungen/chatgpt-coding/" className="hover:text-blue-600">ChatGPT Coding</a></li>
+              </ul>
+            </div>
+            
+            <div className="bg-white rounded-lg p-6 shadow-sm">
+              <h3 className="font-semibold text-gray-900 mb-3">🚀 Advanced AI Development</h3>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>• <a href="https://www.obviousworks.ch/schulungen/chatgpt-advanced/" className="hover:text-blue-600">ChatGPT Advanced</a></li>
+                <li>• <a href="https://www.obviousworks.ch/schulungen/generative-ai-fuer-effiziente-softwareentwicklung/" className="hover:text-blue-600">Generative AI for Software Development</a></li>
+                <li>• <a href="https://www.obviousworks.ch/schulungen/ai-requirements-engineering/" className="hover:text-blue-600">AI Requirements Engineering</a></li>
+                <li>• <a href="https://www.obviousworks.ch/schulungen/ai-developer-bootcamp/" className="hover:text-blue-600">AI Developer Bootcamp</a></li>
+              </ul>
+            </div>
+            
+            <div className="bg-white rounded-lg p-6 shadow-sm">
+              <h3 className="font-semibold text-gray-900 mb-3">🎓 Certifications</h3>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>• <a href="https://www.obviousworks.ch/schulungen/ireb-cpre-foundation/" className="hover:text-blue-600">IREB® CPRE with AI Modules</a></li>
+                <li>• <a href="https://www.obviousworks.ch/schulungen/agile-requirements-specialist/" className="hover:text-blue-600">CARS® with AI Prioritization</a></li>
+                <li>• Requirements Engineering</li>
+                <li>• Agile & Scrum Methodologies</li>
+              </ul>
+            </div>
+            
+            <div className="bg-white rounded-lg p-6 shadow-sm">
+              <h3 className="font-semibold text-gray-900 mb-3">🔗 Connect With Us</h3>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>• <a href="https://www.obviousworks.ch/" className="hover:text-blue-600">Website</a></li>
+                <li>• <a href="https://github.com/obviousworks" className="hover:text-blue-600">GitHub</a></li>
+                <li>• AI Transformation Implementation</li>
+                <li>• Enterprise LLM Integration</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
-      <footer className="bg-white border-t mt-16">
+      <footer className="bg-white border-t">
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="text-center text-sm text-gray-600">
             <p>Built for the llms.txt standard. Learn more at <a href="https://llmstxt.org" className="text-blue-600 hover:underline">llmstxt.org</a></p>

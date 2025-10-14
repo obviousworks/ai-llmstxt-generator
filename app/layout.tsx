@@ -13,12 +13,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LLMs.txt Generator - Automated Documentation for AI Models",
-  description: "Generate llms.txt files automatically from any website. Create AI-friendly documentation that helps Large Language Models understand your site content with structured navigation, key page descriptions, and curated resources.",
-  keywords: ["llms.txt", "AI documentation", "website crawling", "machine learning", "documentation generator", "LLM", "artificial intelligence"],
-  authors: [{ name: "LLMs.txt Generator" }],
-  creator: "LLMs.txt Generator",
-  publisher: "LLMs.txt Generator",
+  title: "LLMs.txt Generator - by ObviousWorks | Let the LLMs eat your content!",
+  description: "Enhanced AI-powered llms.txt generator with sitemap-first crawling, FAQ detection, and intelligent content processing. Automated documentation extraction for Large Language Models - let the LLMs eat your content!",
+  keywords: ["llms.txt", "AI documentation", "website crawling", "machine learning", "documentation generator", "LLM", "artificial intelligence", "ObviousWorks", "sitemap crawling", "FAQ extraction"],
+  authors: [{ name: "ObviousWorks" }],
+  creator: "ObviousWorks",
+  publisher: "ObviousWorks",
   robots: {
     index: true,
     follow: true,
@@ -33,14 +33,14 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    title: 'LLMs.txt Generator - Automated Documentation for AI Models',
-    description: 'Generate llms.txt files automatically from any website. Create AI-friendly documentation that helps Large Language Models understand your site content.',
-    siteName: 'LLMs.txt Generator',
+    title: 'LLMs.txt Generator - by ObviousWorks | Let the LLMs eat your content!',
+    description: 'Enhanced AI-powered llms.txt generator with sitemap-first crawling, FAQ detection, and intelligent content processing - let the LLMs eat your content!',
+    siteName: 'LLMs.txt Generator - by ObviousWorks',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'LLMs.txt Generator - Automated Documentation for AI Models',
-    description: 'Generate llms.txt files automatically from any website. Create AI-friendly documentation that helps Large Language Models understand your site content.',
+    title: 'LLMs.txt Generator - by ObviousWorks | Let the LLMs eat your content!',
+    description: 'Enhanced AI-powered llms.txt generator with sitemap-first crawling, FAQ detection, and intelligent content processing - let the LLMs eat your content!',
   },
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://llm-txt-generator.vercel.app'),
 };
