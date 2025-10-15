@@ -1,0 +1,33 @@
+[Unit]
+Description=LLMs.txt Generator Frontend
+Documentation=https://github.com/obviousworks/ai-llmstxt-generator
+After=network.target llms-api.service
+Requires=llms-api.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/llms-generator
+
+# Environment variables
+Environment="NEXT_PUBLIC_API_URL=http://localhost:8000"
+Environment="NODE_ENV=production"
+
+# Start command
+ExecStart=/usr/bin/npm start
+
+# Restart policy
+Restart=always
+RestartSec=10
+
+# Logging
+StandardOutput=append:/var/log/llms-generator/frontend.log
+StandardError=append:/var/log/llms-generator/frontend-error.log
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

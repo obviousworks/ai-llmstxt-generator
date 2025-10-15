@@ -1,0 +1,32 @@
+[Unit]
+Description=LLMs.txt Generator API Backend
+Documentation=https://github.com/obviousworks/ai-llmstxt-generator
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/llms-generator/backend
+
+# Environment variables
+Environment="OPENAI_API_KEY=your_openai_api_key_here"
+Environment="PYTHONUNBUFFERED=1"
+
+# Start command
+ExecStart=/usr/bin/python3 run_dev.py
+
+# Restart policy
+Restart=always
+RestartSec=10
+
+# Logging
+StandardOutput=append:/var/log/llms-generator/api.log
+StandardError=append:/var/log/llms-generator/api-error.log
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
