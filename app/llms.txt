@@ -1,6 +1,6 @@
-# llm-txt-generator.vercel.app
+# LLMs.txt Generator - by ObviousWorks
 
 ## Documentation
 
-- [LLMs.txt Generator - Automated Documentation for AI Models](https://llm-txt-generator.vercel.app/): Automatically generate llms.txt files from any website to create AI-friendly documentation for Large Language Models.
+- [LLMs.txt Generator - Self-Hosted & Open Source](https://github.com/obviousworks/ai-llmstxt-generator): Automatically generate llms.txt files from any website to create AI-friendly documentation for Large Language Models. Self-hosted solution with automated bi-weekly generation.
 

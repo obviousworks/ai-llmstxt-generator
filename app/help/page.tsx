@@ -122,16 +122,14 @@ OPENAI_API_KEY=your_openai_api_key_here`}
             </div>
 
             <div className="space-y-4">
-              <h3 className="font-medium text-gray-900">For Production (Vercel):</h3>
+              <h3 className="font-medium text-gray-900">For Production (Self-Hosted):</h3>
               <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-sm text-gray-600 mb-3">1. Go to your Vercel project dashboard</p>
-                <p className="text-sm text-gray-600 mb-3">2. Navigate to Settings → Environment Variables</p>
-                <p className="text-sm text-gray-600 mb-3">3. Add a new variable:</p>
+                <p className="text-sm text-gray-600 mb-3">1. Set environment variable on your server:</p>
                 <div className="bg-gray-800 text-gray-100 p-3 rounded text-sm">
-                  <div>Name: <code>OPENAI_API_KEY</code></div>
-                  <div>Value: <code>your_openai_api_key_here</code></div>
+                  <div><code>export OPENAI_API_KEY=your_openai_api_key_here</code></div>
                 </div>
-                <p className="text-sm text-gray-600 mt-3">4. Redeploy your application</p>
+                <p className="text-sm text-gray-600 mt-3">2. Or add to your systemd service file or Docker environment</p>
+                <p className="text-sm text-gray-600 mt-3">3. Restart your application services</p>
               </div>
             </div>
           </div>
@@ -178,7 +176,8 @@ OPENAI_API_KEY=your_openai_api_key_here`}
                 <div>
                   <h3 className="font-medium text-amber-900">Production Note</h3>
                   <p className="text-sm text-amber-700 mt-1">
-                    Automated monitoring requires deployment to Vercel with cron jobs enabled. 
+                    Automated monitoring requires cron jobs on your server. 
+                    Use the provided scripts in the repository for bi-weekly automated generation.
                     Local development uses manual monitoring only.
                   </p>
                 </div>
