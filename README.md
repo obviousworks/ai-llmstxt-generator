@@ -1,49 +1,42 @@
-# 🚀 Free LLMs.txt Generator: Boost LLM SEO & AI Visibility in 2025 – by ObviousWorks.ch
+# 🚀 LLMs.txt Generator - Self-Hosted & Open Source
 
-> **"Let the LLMs eat your content!"** - Der ultimative **llms.txt generator** für **AI content optimization**. Revolutioniere deine **LLM SEO** mit Sitemap-Crawling und FAQ-Extraction – lass LLMs deinen Content zitieren! This enhanced fork transforms website documentation extraction into **AI-friendly content** that boosts citations in ChatGPT, Perplexity, and Gemini.
+> **"Let the LLMs eat your content!"** - Open source **llms.txt generator** for **AI content optimization**. Self-hosted solution with automated bi-weekly generation, sitemap-first crawling, and FAQ extraction. Boost citations in ChatGPT, Perplexity, and Gemini!
 
-An intelligent web application that generates `llms.txt` files for websites and automatically monitors them for changes. This tool follows the [llms.txt specification](https://llmstxt.org/) to create AI-friendly documentation files that help Large Language Models better understand website content.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](./DOCKER_SETUP.md)
+[![Systemd](https://img.shields.io/badge/Systemd-Supported-green.svg)](./SYSTEMD_SETUP.md)
 
-**🌟 This fork includes exclusive features:**
-- 🗺️ Sitemap-first crawling for complete website coverage
-- 📋 Automatic FAQ extraction from Schema.org markup
-- 🎯 Two-stage generation workflow (summary + full-text)
-- 📊 Adaptive content filtering based on website size
+An intelligent web application that generates `llms.txt` files for websites with **automated bi-weekly updates**. This tool follows the [llms.txt specification](https://llmstxt.org/) to create AI-friendly documentation that helps Large Language Models better understand your content.
 
-## 🆕 Improved Documentation Structure
-
-This README has been restructured for better user experience:
-- **📋 Grouped sections**: Related topics are now organized together
-- **🎬 Quick Demo**: Try it in 30 seconds with visual examples
-- **🚀 Progressive flow**: Getting Started → Architecture → Advanced Topics
-- **🔧 Consolidated config**: All settings in one comprehensive section
-- **📚 Better navigation**: Grouped table of contents for easier browsing
+**🌟 Key Features:**
+- 🖥️ **Self-Hosted** - Run on your own server, no cloud dependencies
+- ⏰ **Automated** - Bi-weekly generation with cron jobs
+- 🗺️ **Sitemap-First** - Complete website coverage
+- 📋 **FAQ Extraction** - Schema.org markup support
+- 🐳 **Docker Ready** - One-command deployment
+- 🔧 **Systemd Support** - Native Linux service integration
 
 ## 📋 Table of Contents
 
-### 🚀 Getting Started
+### 🚀 Quick Start
 - [✨ Features](#-features)
+- [⚡ Quick Installation](#-quick-installation)
 - [🎬 Quick Demo](#-quick-demo)
-- [🛠 Technology Stack](#-technology-stack)
-- [📦 Installation & Setup](#-installation--setup)
-- [🎯 Usage](#-usage)
 
-### 🏗️ Architecture & Setup  
-- [📁 Project Structure](#-project-structure)
+### 📦 Deployment Options
+- [🐳 Docker Deployment](#-docker-deployment)
+- [⚙️ Systemd Services](#️-systemd-services)
+- [💻 Local Development](#-local-development)
+
+### ⏰ Automation
+- [🔄 Bi-Weekly Generation](#-bi-weekly-generation)
+- [📊 Monitoring](#-monitoring)
+- [🌐 Public Access](#-public-access)
+
+### 📚 Documentation
 - [🔧 Configuration](#-configuration)
-- [🚢 Deployment](#-deployment)
-- [⏰ Automated Monitoring Setup](#-automated-monitoring-setup)
-
-### 📚 Advanced Topics
-- [📊 Understanding Change Detection](#-understanding-change-detection)
-- [⚡ Performance & Scaling](#-performance--scaling)
-- [🧪 Testing](#-testing)
 - [🐛 Troubleshooting](#-troubleshooting)
-
-### 🤝 Community
-- [🚀 Future Enhancements](#-future-enhancements)
 - [🤝 Contributing](#-contributing)
-- [📋 Quick Reference](#-quick-reference)
 
 ## ✨ Features
 
@@ -57,28 +50,83 @@ This README has been restructured for better user experience:
 - **Dual File Generation**: Creates both `llms.txt` (curated for **GEO**) and `llms-full.txt` (comprehensive **semantic SEO** coverage)
 - **Existing File Detection**: Automatically uses existing llms.txt files when found
 
-### Automated Monitoring (NEW!)
-- **🔄 Smart Change Detection**: Monitors website structure changes automatically
-- **📅 Flexible Scheduling**: From hourly to weekly check intervals
-- **🎯 Intelligent Updates**: Only regenerates when significant changes detected
-- **📊 Change Analytics**: Detailed reports on what changed and why
-- **🤖 Auto-scaling AI**: Processing scales with website size
+### Self-Hosted & Automation
+- **🖥️ Self-Hosted**: Run on your own server - Docker, Systemd, or manual
+- **⏰ Automated Generation**: Bi-weekly cron jobs for fresh content
+- **🔄 Multi-Website Support**: Generate for multiple domains simultaneously
+- **📦 Local & Remote Deployment**: Copy files locally or deploy via SCP
+- **💚 Health Monitoring**: Auto-restart on failures
+- **📧 Notifications**: Email and Slack alerts (optional)
 
 ### Modern Interface
 - **Beautiful UI**: Responsive design built with Next.js and Tailwind CSS
 - **Real-time Progress**: Live feedback during crawling and generation
-- **Monitoring Dashboard**: Comprehensive interface for managing automated updates
 - **Instant Downloads**: Direct download of generated files
+- **Public Access**: Share with your team via Nginx
+
+## ⚡ Quick Installation
+
+### Option 1: Docker (Recommended - 2 Minutes)
+
+```bash
+# Clone repository
+git clone https://github.com/obviousworks/ai-llmstxt-generator.git
+cd ai-llmstxt-generator/llm_txt_creator
+
+# Configure
+cp env.example .env
+nano .env  # Add your OPENAI_API_KEY
+
+# Start
+docker-compose up -d
+
+# Access at http://localhost:3000
+```
+
+**Done!** See [DOCKER_SETUP.md](./DOCKER_SETUP.md) for details.
+
+### Option 2: Systemd Services (5 Minutes)
+
+```bash
+# Clone repository
+git clone https://github.com/obviousworks/ai-llmstxt-generator.git
+cd ai-llmstxt-generator/llm_txt_creator
+
+# Install as system service
+sudo ./systemd/install.sh
+
+# Access at http://localhost:3000
+```
+
+**Done!** See [SYSTEMD_SETUP.md](./SYSTEMD_SETUP.md) for details.
+
+### Option 3: Local Development
+
+```bash
+# Clone repository
+git clone https://github.com/obviousworks/ai-llmstxt-generator.git
+cd ai-llmstxt-generator/llm_txt_creator
+
+# Setup backend
+cd backend
+pip install -r requirements.txt
+python run_dev.py &
+
+# Setup frontend (new terminal)
+cd ..
+npm install
+npm run dev
+
+# Access at http://localhost:3000
+```
 
 ## 🎬 Quick Demo
 
 ### Try It in 30 Seconds
 ```bash
-# Clone and start (automated setup)
-git clone <your-repo-url> && cd llm_txt_creator
-./start.sh
+# After installation, open browser
+http://localhost:3000
 
-# Open browser to http://localhost:3001 (or 3000)
 # Enter a website URL (e.g., https://obviousworks.ch)
 # Click "Generate llms.txt (Summary)" for quick overview
 # Click "Generate llms-full.txt (All Pages)" for complete documentation ✨
@@ -474,181 +522,338 @@ When OpenAI API key is provided:
 - **Large crawls (51-100 pages)**: AI limited to 5 pages per section
 - **Very large crawls (>100 pages)**: No AI enhancement (prevents timeouts)
 
-## 🚢 Deployment
+## 🐳 Docker Deployment
 
-### Production Deployment with Vercel
+Complete Docker setup with production-ready configuration.
 
-The project includes automated deployment to Vercel with cron job scheduling.
-
-**Quick Deploy:**
+**Quick Start:**
 ```bash
-./deploy-vercel.sh
+# Clone and configure
+git clone https://github.com/obviousworks/ai-llmstxt-generator.git
+cd ai-llmstxt-generator/llm_txt_creator
+cp env.example .env
+nano .env  # Add OPENAI_API_KEY
+
+# Start
+docker-compose up -d
+
+# Check status
+docker-compose ps
+docker-compose logs -f
 ```
 
-**Manual Deploy:**
+**Features:**
+- ✅ Multi-stage build for optimized image size
+- ✅ Health checks for both services
+- ✅ Volume mounts for generated files and logs
+- ✅ Automatic restart policy
+- ✅ Production-ready configuration
+
+**See [DOCKER_SETUP.md](./DOCKER_SETUP.md) for complete guide.**
+
+## ⚙️ Systemd Services
+
+Run as native Linux services with automatic startup.
+
+**Quick Start:**
 ```bash
-# Login to Vercel
-vercel login
+# Clone repository
+git clone https://github.com/obviousworks/ai-llmstxt-generator.git
+cd ai-llmstxt-generator/llm_txt_creator
 
-# Deploy to production
-vercel --prod
+# Install
+sudo ./systemd/install.sh
+
+# Manage services
+sudo systemctl status llms-api llms-frontend
+sudo systemctl restart llms-api llms-frontend
+sudo journalctl -u llms-api -f
 ```
 
-**⚠️ Important Notes:**
-- **Vercel Free Plan**: Function timeout limited to 60 seconds max, **cron jobs limited to daily frequency**
-- **Vercel Pro Plan**: Function timeout can be up to 300 seconds, **unlimited cron frequency** 
-- For large websites (>50 pages), consider upgrading to Pro plan or use local development
-- **Free plan**: Cron jobs run daily at 12:00 PM UTC
-- **Pro plan**: Can run every 6 hours or any custom schedule
+**Features:**
+- ✅ Auto-start on boot
+- ✅ Automatic restart on failure
+- ✅ Proper logging to `/var/log/llms-generator/`
+- ✅ Security hardening
+- ✅ Service dependencies
 
-**Environment Variables Required:**
+**See [SYSTEMD_SETUP.md](./SYSTEMD_SETUP.md) for complete guide.**
+
+## 💻 Local Development
+
+For development and testing.
+
+**Setup:**
 ```bash
-# Set in Vercel dashboard or via CLI
-vercel env add OPENAI_API_KEY
+# Backend
+cd backend
+pip install -r requirements.txt
+python run_dev.py  # Runs on port 8000
+
+# Frontend (new terminal)
+npm install
+npm run dev  # Runs on port 3000
 ```
 
-### Vercel Configuration
-
-The `vercel.json` includes:
-```json
-{
-  "functions": {
-    "api/generate.py": { "maxDuration": 300 },
-    "api/scheduler.py": { "maxDuration": 600 },
-    "api/cron.py": { "maxDuration": 900 }
-  },
-  "crons": [
-    {
-      "path": "/api/cron",
-      "schedule": "0 */6 * * *"
-    }
-  ]
-}
-```
-
-## 🧪 Testing
-
-### Test Local Development
+**Environment:**
 ```bash
-# Test main API
-curl http://localhost:8000/health
+# Create .env file
+cp env.example .env
 
-# Test scheduler API  
-curl http://localhost:8001/cron
-
-# Test frontend
-open http://localhost:3000
+# Add your API key
+OPENAI_API_KEY=your_key_here
+NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
-### Test Production Deployment
+## 🔄 Bi-Weekly Generation
+
+Automate llms.txt generation for multiple websites.
+
+**Quick Setup:**
 ```bash
-# Test Vercel functions
-curl https://your-app.vercel.app/api/health
+# 1. Configure websites
+nano config/websites.conf
 
-# Test monitoring dashboard
-open https://your-app.vercel.app/monitor
+# Add your websites
+WEBSITES=(
+    "https://your-website.com"
+    "https://another-site.com"
+)
+
+DEPLOY_TARGETS=(
+    ["your-website.com"]="/var/www/your-site/public"
+    ["another-site.com"]="user@server:/var/www/html"
+)
+
+# 2. Test scripts
+./scripts/generate-llms.sh
+./scripts/deploy-llms.sh
+
+# 3. Setup cron (every 2 weeks)
+./scripts/setup-cron.sh
 ```
 
-## 📊 Understanding Change Detection
+**Features:**
+- ✅ Bi-weekly automated generation
+- ✅ Multi-website support
+- ✅ Local and remote deployment (SCP)
+- ✅ Automatic retry on failure
+- ✅ Email/Slack notifications
+- ✅ Health monitoring
 
-### Change Types Detected
-- **New pages**: Recently added documentation or content
-- **Removed pages**: Deleted or moved content
-- **Modified pages**: Title changes, section reassignments
-- **Structural changes**: Navigation reorganization, new product areas
+**See [AUTOMATION_SETUP.md](./AUTOMATION_SETUP.md) for complete guide.**
 
-### Severity Levels
-- **Major (50%+)**: Large restructures, new product launches → Always update
-- **Moderate (20%+)**: New documentation sections → Always update
-- **Minor (5%+)**: New pages, title changes → Always update
-- **Minimal (<5%)**: Minor tweaks → Skip update (prevents noise)
+## 📊 Monitoring
 
-### Example Change Report
-```json
-{
-  "severity": "moderate",
-  "new_pages": [
-    "https://docs.example.com/new-api-guide",
-    "https://docs.example.com/beta-features"
-  ],
-  "removed_pages": [
-    "https://docs.example.com/deprecated-api"
-  ],
-  "modified_pages": [
-    {
-      "url": "https://docs.example.com/quickstart",
-      "old_title": "Quick Start",
-      "new_title": "Getting Started Guide",
-      "old_section": "Documentation",
-      "new_section": "Getting Started"
-    }
-  ]
-}
+Monitor services and automate health checks.
+
+**Health Check:**
+```bash
+# Manual check
+./scripts/health-check.sh
+
+# Automated (add to cron)
+*/5 * * * * /path/to/scripts/health-check.sh
 ```
 
-## ⚡ Performance & Scaling
+**View Logs:**
+```bash
+# Generation logs
+tail -f /var/log/llms-generator.log
 
-### Vercel Function Limits
-- **Execution Time**: 10 seconds (Hobby), 60 seconds (Pro), 900 seconds (cron)
-- **Memory**: Up to 1024MB
-- **Payload Size**: 4.5MB request/response limit
+# Service logs (Docker)
+docker-compose logs -f
 
-### Monitoring Efficiency
-- **Concurrent checks**: System handles multiple sites efficiently
-- **Smart scheduling**: Only checks sites when intervals are due
-- **Change thresholds**: Prevents unnecessary regeneration
-- **Timeout management**: Graceful degradation for large sites
+# Service logs (Systemd)
+sudo journalctl -u llms-api -f
+sudo journalctl -u llms-frontend -f
+```
 
-### Scaling Tips
-- **Use appropriate page limits**: See [Configuration](#-configuration) for recommendations
-- **Monitor function execution times**: Check Vercel dashboard for performance metrics
-- **Consider Pro plan**: For larger sites requiring longer execution times
-- **Batch monitoring**: System automatically batches multiple site checks efficiently
+**Statistics:**
+```bash
+# Count successful generations
+grep "✅ Success" /var/log/llms-generator.log | wc -l
+
+# View last generation summary
+grep "Generation Summary" -A 5 /var/log/llms-generator.log | tail -6
+```
+
+## 🌐 Public Access
+
+Share with your team using Nginx reverse proxy.
+
+**Quick Setup:**
+```bash
+# Install Nginx configuration
+sudo ./nginx/install.sh
+
+# Enter your domain when prompted
+# Example: llms-generator.your-domain.com
+```
+
+**Enable HTTPS:**
+```bash
+# Install certbot
+sudo apt install certbot python3-certbot-nginx
+
+# Get SSL certificate
+sudo certbot --nginx -d llms-generator.your-domain.com
+
+# Auto-renewal is configured automatically
+```
+
+**Features:**
+- ✅ HTTP to HTTPS redirect
+- ✅ SSL/TLS configuration
+- ✅ Security headers
+- ✅ Gzip compression
+- ✅ WebSocket support
+- ✅ Proper timeouts for API generation
 
 ## 🐛 Troubleshooting
 
-### Common Issues
+### Docker Issues
 
-**"Failed to fetch" errors locally:**
-- Check that `.env` has `NEXT_PUBLIC_API_URL=http://localhost:8000`
-- Ensure backend servers are running on ports 8000 and 8001
-
-**"Site not being monitored":**
-- Add the site first using the monitor interface
-- Check the URL format (include https://)
-
-**"No changes detected but site updated":**
-- Check if changes are below 5% threshold
-- Force manual check to see latest status
-- Consider if changes are in content vs. structure
-
-**"Update failed":**
-- Check if the website is accessible
-- Verify the site doesn't block crawlers
-- Look for SSL/security issues
-
-### Debug Mode
+**Container won't start:**
 ```bash
-export DEBUG=1
-export LOG_LEVEL=DEBUG
-python run_dev.py
+# Check logs
+docker-compose logs
+
+# Check if ports are available
+sudo lsof -i :8000
+sudo lsof -i :3000
+
+# Rebuild
+docker-compose down
+docker-compose up -d --build
 ```
 
-## 🚀 Future Enhancements
+**Backend not responding:**
+```bash
+# Check backend health
+curl http://localhost:8000/health
 
-### Planned Features
-- **Database persistence**: Store monitoring data permanently
-- **Email notifications**: Alert when sites update
-- **Webhook integration**: Push updates to external systems
-- **Advanced scheduling**: Per-site custom schedules
-- **Change analytics**: Track patterns and trends
-- **Team collaboration**: Shared monitoring dashboards
+# View backend logs
+docker-compose exec llms-generator cat /app/logs/backend.log
+```
 
-### Contributing Areas
-- `ChangeDetector`: Improve change detection algorithms
-- `AutoUpdater`: Add new notification methods
-- `LLMSTxtGenerator`: Enhance content organization
-- Frontend: Better visualization and management tools
+### Systemd Issues
+
+**Services won't start:**
+```bash
+# Check service status
+sudo systemctl status llms-api llms-frontend
+
+# Check logs
+sudo journalctl -u llms-api -n 50
+sudo journalctl -u llms-frontend -n 50
+
+# Test manually
+cd /opt/llms-generator/backend
+python3 run_dev.py
+```
+
+**Permission denied:**
+```bash
+# Fix ownership
+sudo chown -R www-data:www-data /opt/llms-generator
+sudo chown -R www-data:www-data /var/log/llms-generator
+```
+
+### Automation Issues
+
+**Generation fails:**
+```bash
+# Check API is running
+curl http://localhost:8000/health
+
+# Test generation manually
+./scripts/generate-llms.sh
+
+# Check logs
+tail -f /var/log/llms-generator.log
+```
+
+**Cron not running:**
+```bash
+# Check cron service
+sudo systemctl status cron
+
+# Verify cron job
+crontab -l
+
+# Test manually
+./scripts/generate-llms.sh && ./scripts/deploy-llms.sh
+```
+
+### Common Issues
+
+**"Failed to fetch" errors:**
+- Check `.env` has `NEXT_PUBLIC_API_URL=http://localhost:8000`
+- Ensure backend is running on port 8000
+- Verify firewall allows connections
+
+**"OpenAI API error":**
+- Check API key is set correctly
+- Verify API key has credits
+- Check OpenAI service status
+
+**"Deployment failed":**
+- Check SSH keys for remote deployment
+- Verify target directories exist
+- Check permissions on target paths
+
+## 🔧 Configuration
+
+### Environment Variables
+
+```bash
+# Required
+OPENAI_API_KEY=your_key_here
+
+# Optional
+NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_SITE_URL=https://your-domain.com
+```
+
+### Website Configuration
+
+Edit `config/websites.conf`:
+
+```bash
+# Websites to generate for
+WEBSITES=(
+    "https://your-website.com"
+)
+
+# Generation settings per domain
+declare -A GENERATION_SETTINGS=(
+    ["your-website.com"]="50"  # Max pages
+)
+
+# Deployment targets
+declare -A DEPLOY_TARGETS=(
+    ["your-website.com"]="/var/www/your-site/public"
+)
+
+# Schedule (every 2 weeks)
+CRON_SCHEDULE="0 2 */14 * *"
+```
+
+## 🎯 Future Development
+
+This fork is actively maintained by ObviousWorks. Future features will be documented here with implementation dates.
+
+**Planned Features für LLM SEO 2025:**
+- [ ] **GEO/AEO Integration**: Automatische Schema-Markup-Generierung für **LLM search optimization**
+- [ ] Multi-Modal Support: Optimiere für Video/Infographics in AI-Suchen
+- [ ] Multi-language support for FAQ extraction
+- [ ] Enhanced AI categorization with custom prompts für **topic clustering**
+- [ ] Batch processing for multiple websites
+- [ ] Export to additional formats (JSON, XML)
+- [ ] Advanced analytics dashboard mit **AI visibility metrics**
+- [ ] Webhook integration for deployment notifications
+- [ ] Database persistence for generation history
 
 ## 🤝 Contributing
 
