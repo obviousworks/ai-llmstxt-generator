@@ -289,12 +289,6 @@ export default function Home() {
               >
                 📚 Help & Setup
               </Link>
-              <Link 
-                href="/monitor"
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200 text-sm font-medium"
-              >
-                🔄 Auto-Monitor Sites
-              </Link>
             </nav>
           </div>
         </div>

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Key, Brain, Zap, FileText, Monitor, AlertCircle, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Key, Brain, Zap, FileText, AlertCircle, CheckCircle, Globe, Download } from 'lucide-react';
 
 export default function HelpPage() {
   return (
@@ -25,7 +25,7 @@ export default function HelpPage() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">Help & Setup Guide</h1>
-                <p className="text-sm text-gray-600">AI Support & Configuration</p>
+                <p className="text-sm text-gray-600">How to Generate llms.txt Files</p>
               </div>
             </div>
           </div>
@@ -135,50 +135,112 @@ OPENAI_API_KEY=your_openai_api_key_here`}
           </div>
         </div>
 
-        {/* Monitor Page Info */}
+        {/* How to Generate */}
+        <div className="bg-white rounded-lg shadow-sm border p-6 mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <Globe className="w-6 h-6 text-green-600" />
+            <h2 className="text-xl font-semibold text-gray-900">How to Generate llms.txt Files</h2>
+          </div>
+
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <h3 className="font-medium text-gray-900">Step 1: Enter Website URL</h3>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="text-sm text-gray-600 mb-2">Enter the full URL of the website you want to generate llms.txt for:</p>
+                <div className="bg-white border border-gray-300 rounded px-3 py-2 text-sm text-gray-500">
+                  https://your-website.com
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="font-medium text-gray-900">Step 2: Choose Generation Type</h3>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="font-medium text-blue-900 mb-2">📄 Summary (llms.txt)</h4>
+                  <ul className="text-sm text-blue-700 space-y-1">
+                    <li>• Curated selection of key pages</li>
+                    <li>• AI-enhanced descriptions</li>
+                    <li>• Organized by sections</li>
+                    <li>• Best for most use cases</li>
+                  </ul>
+                </div>
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                  <h4 className="font-medium text-purple-900 mb-2">📚 Full (llms-full.txt)</h4>
+                  <ul className="text-sm text-purple-700 space-y-1">
+                    <li>• Complete sitemap coverage</li>
+                    <li>• All discovered pages</li>
+                    <li>• Comprehensive documentation</li>
+                    <li>• For large documentation sites</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="font-medium text-gray-900">Step 3: Download Files</h3>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="text-sm text-gray-600 mb-3">After generation completes:</p>
+                <ul className="space-y-2 text-sm text-gray-600">
+                  <li className="flex items-start gap-2">
+                    <Download className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span>Click <strong>"Download llms.txt"</strong> to save the file</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span>Upload to your website root: <code className="bg-gray-200 px-1 rounded">https://your-site.com/llms.txt</code></span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span>Verify it's accessible by visiting the URL</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Automation Info */}
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <div className="flex items-center gap-3 mb-4">
-            <Monitor className="w-6 h-6 text-green-600" />
-            <h2 className="text-xl font-semibold text-gray-900">Automated Monitoring</h2>
+            <Zap className="w-6 h-6 text-purple-600" />
+            <h2 className="text-xl font-semibold text-gray-900">Automated Generation</h2>
           </div>
 
           <div className="space-y-4">
             <p className="text-gray-600">
-              The <Link href="/monitor" className="text-blue-600 hover:underline font-medium">Monitor page</Link> allows you to:
+              For automated bi-weekly generation, this self-hosted version includes cron scripts:
             </p>
             
-            <ul className="space-y-2 text-sm text-gray-600">
-              <li className="flex items-start gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                <span><strong>Add websites</strong> for automatic monitoring</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                <span><strong>Set check intervals</strong> (hourly to weekly)</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                <span><strong>Configure page limits</strong> for large sites</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                <span><strong>View update history</strong> and change detection</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                <span><strong>Force manual updates</strong> when needed</span>
-              </li>
-            </ul>
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-sm text-gray-600 mb-2">See the repository documentation for:</p>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span><strong>scripts/generate-llms.sh</strong> - Automated generation</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span><strong>scripts/deploy-llms.sh</strong> - Automated deployment</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span><strong>scripts/setup-cron.sh</strong> - Bi-weekly cron setup</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span><strong>config/websites.conf</strong> - Multi-website configuration</span>
+                </li>
+              </ul>
+            </div>
 
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
+                <Zap className="w-5 h-5 text-blue-600 mt-0.5" />
                 <div>
-                  <h3 className="font-medium text-amber-900">Production Note</h3>
-                  <p className="text-sm text-amber-700 mt-1">
-                    Automated monitoring requires cron jobs on your server. 
-                    Use the provided scripts in the repository for bi-weekly automated generation.
-                    Local development uses manual monitoring only.
+                  <h3 className="font-medium text-blue-900">Self-Hosted Automation</h3>
+                  <p className="text-sm text-blue-700 mt-1">
+                    Configure multiple websites in <code className="bg-blue-100 px-1 rounded">config/websites.conf</code> and run <code className="bg-blue-100 px-1 rounded">./scripts/setup-cron.sh</code> to enable automated bi-weekly generation and deployment.
                   </p>
                 </div>
               </div>
@@ -193,12 +255,6 @@ OPENAI_API_KEY=your_openai_api_key_here`}
             className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors text-center font-medium"
           >
             Start Generating
-          </Link>
-          <Link 
-            href="/monitor"
-            className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors text-center font-medium"
-          >
-            Setup Monitoring
           </Link>
         </div>
       </div>
