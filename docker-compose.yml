@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  llms-generator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: llms-txt-generator
+    ports:
+      - "8000:8000"  # Backend API
+      - "3000:3000"  # Frontend
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    volumes:
+      - ./generated:/app/generated      # Store generated llms.txt files
+      - ./logs:/app/logs                # Application logs
+      - ./config:/app/config            # Configuration files
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - llms-network
+
+networks:
+  llms-network:
+    driver: bridge
