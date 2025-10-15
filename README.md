@@ -1,6 +1,6 @@
-# 🤖 LLMs.txt Generator - by ObviousWorks.ch
+# 🚀 Free LLMs.txt Generator: Boost LLM SEO & AI Visibility in 2025 – by ObviousWorks.ch
 
-> **"Let the LLMs eat your content!"** - This is an enhanced fork of the AI LLMs.txt Generator that revolutionizes website documentation extraction with sitemap-first crawling, FAQ detection, and intelligent content processing - making your content perfectly digestible for Large Language Models.
+> **"Let the LLMs eat your content!"** - Der ultimative **llms.txt generator** für **AI content optimization**. Revolutioniere deine **LLM SEO** mit Sitemap-Crawling und FAQ-Extraction – lass LLMs deinen Content zitieren! This enhanced fork transforms website documentation extraction into **AI-friendly content** that boosts citations in ChatGPT, Perplexity, and Gemini.
 
 An intelligent web application that generates `llms.txt` files for websites and automatically monitors them for changes. This tool follows the [llms.txt specification](https://llmstxt.org/) to create AI-friendly documentation files that help Large Language Models better understand website content.
 
@@ -47,14 +47,14 @@ This README has been restructured for better user experience:
 
 ## ✨ Features
 
-### Core Generation
-- **🗺️ Sitemap-First Crawling**: Automatically discovers ALL pages via sitemap.xml/sitemap_index.xml
-- **📋 FAQ Extraction**: Extracts FAQs from Schema.org JSON-LD markup for comprehensive documentation
-- **🎯 Two-Stage Workflow**: Generate summary first, then full-text with all pages
-- **Intelligent Website Crawling**: Automatically discovers and analyzes website pages
-- **AI-Enhanced Content**: Uses OpenAI to improve descriptions and organization
-- **Smart Categorization**: Dynamic section organization based on content themes
-- **Dual File Generation**: Creates both `llms.txt` (curated) and `llms-full.txt` (comprehensive)
+### Core Generation & LLM SEO
+- **🗺️ Sitemap-First Crawling**: Automatically discovers ALL pages via sitemap.xml/sitemap_index.xml for complete **AI content optimization**
+- **📋 FAQ Extraction for Semantic SEO**: Extracts FAQs from Schema.org JSON-LD markup - perfekt für **semantic SEO** und **AEO (Answer Engine Optimization)** – extrahiert Q&A für AI-Responses
+- **🎯 Two-Stage Workflow**: Generate summary first, then full-text with all pages optimized for **LLM search optimization**
+- **🚀 LLM SEO Boost**: Optimiere für **Generative Engine Optimization (GEO)** – erhöhe Citations in ChatGPT/Perplexity durch strukturierte FAQs und Semantics
+- **AI-Enhanced Content**: Uses OpenAI to improve descriptions and organization for better **AI visibility**
+- **Smart Categorization**: Dynamic section organization based on content themes using **topic clustering** for LLMs
+- **Dual File Generation**: Creates both `llms.txt` (curated for **GEO**) and `llms-full.txt` (comprehensive **semantic SEO** coverage)
 - **Existing File Detection**: Automatically uses existing llms.txt files when found
 
 ### Automated Monitoring (NEW!)
@@ -1056,12 +1056,14 @@ Forked from [rdyplayerB/ai-llmstxt-generator](https://github.com/rdyplayerB/ai-l
 
 This fork is actively maintained by ObviousWorks. Future features will be documented here with implementation dates.
 
-**Planned Features:**
+**Planned Features für LLM SEO 2025:**
+- [ ] **GEO/AEO Integration**: Automatische Schema-Markup-Generierung für **LLM search optimization**
+- [ ] Multi-Modal Support: Optimiere für Video/Infographics in AI-Suchen
 - [ ] Multi-language support for FAQ extraction
-- [ ] Enhanced AI categorization with custom prompts
+- [ ] Enhanced AI categorization with custom prompts für **topic clustering**
 - [ ] Batch processing for multiple websites
 - [ ] Export to additional formats (JSON, XML)
-- [ ] Advanced analytics dashboard
+- [ ] Advanced analytics dashboard mit **AI visibility metrics**
 
 ---
 
@@ -1090,6 +1092,14 @@ This fork is actively maintained by ObviousWorks. Future features will be docume
 
 ---
 
-Built with ❤️ by [ObviousWorks](https://obviousworks.ch) for the llms.txt standard.
+## 🚀 Get Started Now!
+
+**Starte deinen llms.txt generator jetzt – booste AI search visibility!** 
+
+⭐ **Star this Repo** für Updates zu **LLM SEO 2025** trends  
+🔗 **Try it live**: [Free LLMs.txt Generator](https://llm-txt-generator.vercel.app)  
+📚 **Learn more**: [LLM SEO Training bei ObviousWorks](https://obviousworks.ch)
+
+Built with ❤️ by [ObviousWorks](https://obviousworks.ch) for the **llms.txt standard** and **AI visibility optimization**.
 
 **Original Project**: [rdyplayerB/ai-llmstxt-generator](https://github.com/rdyplayerB/ai-llmstxt-generator)
