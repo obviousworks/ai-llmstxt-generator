@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Download, Globe, FileText, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 interface ValidationError {
   type?: string
@@ -274,9 +275,13 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <FileText className="w-6 h-6 text-white" />
-              </div>
+              <Image 
+                src="/llm_logo.webp" 
+                alt="LLMs.txt Generator Logo" 
+                width={60} 
+                height={60} 
+                className="rounded-lg"
+              />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">🚀 Free LLMs.txt Generator</h1>
                 <p className="text-sm text-gray-600">Optimize Your Site for LLM SEO & AI Search in 2025</p>
@@ -568,6 +573,15 @@ export default function Home() {
       <section className="bg-gray-50 border-t mt-16">
         <div className="max-w-7xl mx-auto px-4 py-12">
           <div className="text-center mb-8">
+            <div className="flex justify-center mb-6">
+              <Image 
+                src="/llm_logo.webp" 
+                alt="LLMs.txt Generator Logo" 
+                width={200} 
+                height={200} 
+                className="rounded-lg shadow-lg"
+              />
+            </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">About ObviousWorks</h2>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
               Schweiz' Top-Experten für <strong>IREB®</strong>, Agile & <strong>AI/LLM Integration</strong>. Bridge zu <strong>AI-powered future</strong> mit Tools wie diesem <strong>llms.txt generator</strong>. 
