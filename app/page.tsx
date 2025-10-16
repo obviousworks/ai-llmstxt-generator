@@ -278,8 +278,9 @@ export default function Home() {
                 <FileText className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">🚀 Free LLMs.txt Generator: Optimize Your Site for LLM SEO & AI Search in 2025</h1>
-                <p className="text-sm text-gray-600">Automatisierter <strong>llms.txt generator</strong> für <strong>AI content optimization</strong> – lass LLMs deinen Content zitieren! Revolutionäre <strong>LLM SEO</strong> mit Sitemap-Crawling & FAQ-Detection.</p>
+                <h1 className="text-2xl font-bold text-gray-900">🚀 Free LLMs.txt Generator</h1>
+                <p className="text-sm text-gray-600">Optimize Your Site for LLM SEO & AI Search in 2025</p>
+                <p className="text-sm text-gray-500 mt-1">Automated <strong>llms.txt generator</strong> for <strong>AI content optimization</strong> – let LLMs cite your content! Revolutionary <strong>LLM SEO</strong> with Sitemap-Crawling & FAQ-Detection.</p>
               </div>
             </div>
             <nav className="flex gap-3">
@@ -298,7 +299,7 @@ export default function Home() {
       <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-b">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <blockquote className="text-lg text-gray-700 italic border-l-4 border-blue-500 pl-4">
-            "Der ultimative <strong>llms.txt generator</strong> für <strong>LLM SEO & AI visibility</strong> in 2025! Revolutioniere deine <strong>Generative Engine Optimization (GEO)</strong> mit Sitemap-Crawling, FAQ-Detection und <strong>semantic SEO</strong> - booste Citations in ChatGPT, Perplexity & Gemini."
+            "The ultimate <strong>llms.txt generator</strong> for <strong>LLM SEO & AI visibility</strong> in 2025! Revolutionize your <strong>Generative Engine Optimization (GEO)</strong> with Sitemap-Crawling, FAQ-Detection and <strong>semantic SEO</strong> - boost citations in ChatGPT, Perplexity & Gemini."
           </blockquote>
         </div>
       </div>
