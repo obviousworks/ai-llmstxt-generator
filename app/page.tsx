@@ -274,13 +274,13 @@ export default function Home() {
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               <Image 
                 src="/llm_logo.webp" 
                 alt="LLMs.txt Generator Logo" 
-                width={60} 
-                height={60} 
-                className="rounded-lg"
+                width={90} 
+                height={90} 
+                className="rounded-lg flex-shrink-0"
               />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">🚀 Free LLMs.txt Generator</h1>
@@ -579,7 +579,8 @@ export default function Home() {
                 alt="LLMs.txt Generator Logo" 
                 width={200} 
                 height={200} 
-                className="rounded-lg shadow-lg"
+                className="object-contain"
+                style={{ background: 'transparent' }}
               />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">About ObviousWorks</h2>
