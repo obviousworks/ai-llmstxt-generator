@@ -41,7 +41,7 @@ export default function MonitorPage() {
   const [checkingUpdates, setCheckingUpdates] = useState(false);
   const [updateResults, setUpdateResults] = useState<UpdateResult[]>([]);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3005';
 
   // Determine scheduler URL based on environment
   const getSchedulerUrl = () => {

@@ -76,7 +76,7 @@ trap cleanup SIGINT SIGTERM
 echo ""
 echo "✅ Services started successfully!"
 echo ""
-echo "🌐 Frontend: http://localhost:3000"
+echo "🌐 Frontend: http://localhost:3005"
 echo "🔌 Backend API: http://localhost:8000"
 echo "📚 API Docs: http://localhost:8000/docs"
 echo ""

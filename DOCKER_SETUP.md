@@ -26,12 +26,12 @@ docker-compose up -d
 
 # Or build manually
 docker build -t llms-generator .
-docker run -d -p 8000:8000 -p 3000:3001 --env-file .env llms-generator
+docker run -d -p 8000:8000 -p 3000:3005 --env-file .env llms-generator
 ```
 
 ### 3. Access Application
 
-- **Frontend**: http://localhost:3001
+- **Frontend**: http://localhost:3005
 - **Backend API**: http://localhost:8000
 - **Health Check**: http://localhost:8000/health
 
@@ -110,7 +110,7 @@ Edit `docker-compose.yml` to change ports:
 ```yaml
 ports:
   - "8000:8000"  # Backend: change first number
-  - "3000:3001"  # Frontend: change first number
+  - "3000:3005"  # Frontend: change first number
 ```
 
 ---
@@ -125,7 +125,7 @@ server {
     server_name your-domain.com;
     
     location / {
-        proxy_pass http://localhost:3001;
+        proxy_pass http://localhost:3005;
         proxy_set_header Host $host;
     }
     
@@ -160,7 +160,7 @@ docker-compose logs
 
 # Check if ports are available
 sudo lsof -i :8000
-sudo lsof -i :3001
+sudo lsof -i :3005
 
 # Remove and rebuild
 docker-compose down
@@ -244,7 +244,7 @@ docker-compose ps
 curl http://localhost:8000/health
 
 # 3. Test frontend
-curl http://localhost:3001
+curl http://localhost:3005
 
 # 4. Test generation (optional)
 curl -X POST http://localhost:8000/generate \

@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     title: 'LLMs.txt Generator - by ObviousWorks | Let the LLMs eat your content!',
     description: 'Enhanced AI-powered llms.txt generator with sitemap-first crawling, FAQ detection, and intelligent content processing - let the LLMs eat your content!',
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3005'),
 };
 
 export default function RootLayout({

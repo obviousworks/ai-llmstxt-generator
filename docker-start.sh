@@ -39,7 +39,7 @@ echo "Frontend started with PID: $FRONTEND_PID"
 echo "=========================================="
 echo "✅ LLMs.txt Generator is running!"
 echo "Backend API: http://localhost:8000"
-echo "Frontend: http://localhost:3000"
+echo "Frontend: http://localhost:3005"
 echo "Logs: /app/logs/"
 echo "=========================================="
 

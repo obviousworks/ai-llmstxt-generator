@@ -6,7 +6,7 @@ set -e
 
 # Configuration
 API_URL="${API_URL:-http://localhost:8000}"
-FRONTEND_URL="${FRONTEND_URL:-http://localhost:3000}"
+FRONTEND_URL="${FRONTEND_URL:-http://localhost:3005}"
 LOG_FILE="${LOG_FILE:-/var/log/llms-generator/health-check.log}"
 USE_SYSTEMD=true  # Set to false if using Docker
 

@@ -146,7 +146,7 @@ __pycache__
 - [ ] `docker-compose build` succeeds
 - [ ] `docker-compose up` starts both services
 - [ ] Backend accessible at http://localhost:8000
-- [ ] Frontend accessible at http://localhost:3000
+- [ ] Frontend accessible at http://localhost:3005
 - [ ] Generation works end-to-end
 
 ---
@@ -356,7 +356,7 @@ echo "View with: crontab -l"
 # Usage: ./health-check.sh
 
 API_URL="${API_URL:-http://localhost:8000}"
-FRONTEND_URL="${FRONTEND_URL:-http://localhost:3000}"
+FRONTEND_URL="${FRONTEND_URL:-http://localhost:3005}"
 
 # Check API
 if ! curl -sf "$API_URL/health" > /dev/null; then
@@ -416,7 +416,7 @@ upstream backend {
 }
 
 upstream frontend {
-    server localhost:3000;
+    server localhost:3005;
 }
 
 server {
