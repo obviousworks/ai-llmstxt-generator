@@ -210,7 +210,7 @@ server {
     server_name your-domain.com;
     
     location / {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:3001;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -274,7 +274,7 @@ python3 run_dev.py
 ```bash
 # Check what's using the ports
 sudo lsof -i :8000
-sudo lsof -i :3000
+sudo lsof -i :3001
 
 # Kill process if needed
 sudo kill -9 <PID>
@@ -357,7 +357,7 @@ sudo systemctl start llms-api llms-frontend
 curl http://localhost:8000/health
 
 # Check frontend
-curl http://localhost:3000
+curl http://localhost:3001
 
 # Automated health check script
 cat > /usr/local/bin/llms-health-check.sh << 'EOF'
@@ -366,7 +366,7 @@ if ! curl -sf http://localhost:8000/health > /dev/null; then
     echo "Backend down, restarting..."
     systemctl restart llms-api
 fi
-if ! curl -sf http://localhost:3000 > /dev/null; then
+if ! curl -sf http://localhost:3001 > /dev/null; then
     echo "Frontend down, restarting..."
     systemctl restart llms-frontend
 fi

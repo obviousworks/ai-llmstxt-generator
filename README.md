@@ -80,7 +80,7 @@ nano .env  # Add your OPENAI_API_KEY
 # Start
 docker-compose up -d
 
-# Access at http://localhost:3000
+# Access at http://localhost:3001
 ```
 
 **Done!** See [DOCKER_SETUP.md](./DOCKER_SETUP.md) for details.
@@ -95,7 +95,7 @@ cd ai-llmstxt-generator/llm_txt_creator
 # Install as system service
 sudo ./systemd/install.sh
 
-# Access at http://localhost:3000
+# Access at http://localhost:3001
 ```
 
 **Done!** See [SYSTEMD_SETUP.md](./SYSTEMD_SETUP.md) for details.
@@ -117,7 +117,7 @@ cd ..
 npm install
 npm run dev
 
-# Access at http://localhost:3000
+# Access at http://localhost:3001
 ```
 
 ## 🎬 Quick Demo
@@ -125,7 +125,7 @@ npm run dev
 ### Try It in 30 Seconds
 ```bash
 # After installation, open browser
-http://localhost:3000
+http://localhost:3001
 
 # Enter a website URL (e.g., https://obviousworks.ch)
 # Click "Generate llms.txt (Summary)" for quick overview
@@ -294,7 +294,7 @@ llm_txt_creator/                   # Root project directory
   
 **Development Mode (Local):**
 ```
-Frontend (localhost:3000) 
+Frontend (localhost:3001) 
     ↓
 Backend FastAPI (localhost:8000) - Main API
     ↓
@@ -375,8 +375,8 @@ Automatic Cron Jobs (every 6 hours)
    ```
 
 5. **Open your browser**
-   - **Main App**: http://localhost:3000
-   - **Monitor Dashboard**: http://localhost:3000/monitor
+   - **Main App**: http://localhost:3001
+   - **Monitor Dashboard**: http://localhost:3001/monitor
    - **API Docs**: http://localhost:8000/docs
    - **Scheduler Docs**: http://localhost:8001/docs
 
@@ -721,7 +721,7 @@ docker-compose logs
 
 # Check if ports are available
 sudo lsof -i :8000
-sudo lsof -i :3000
+sudo lsof -i :3001
 
 # Rebuild
 docker-compose down
@@ -890,8 +890,8 @@ If you encounter any issues or have questions:
 ## 📋 Quick Reference
 
 ### Local URLs
-- **Main App**: http://localhost:3000
-- **Monitor Dashboard**: http://localhost:3000/monitor
+- **Main App**: http://localhost:3001
+- **Monitor Dashboard**: http://localhost:3001/monitor
 - **Main API Docs**: http://localhost:8000/docs
 - **Scheduler API Docs**: http://localhost:8001/docs
 
