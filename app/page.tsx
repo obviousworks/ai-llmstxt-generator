@@ -42,14 +42,6 @@ interface GenerationResult {
 // Get API URL - use environment variable, or detect if we're in development vs production
 const getApiUrl = async () => {
   console.log('getApiUrl called')
-  console.log('process.env.NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL)
-  console.log('window available:', typeof window !== 'undefined')
-  
-  if (typeof window !== 'undefined') {
-    console.log('window.location.hostname:', window.location.hostname)
-    console.log('window.location.port:', window.location.port)
-    console.log('window.location.origin:', window.location.origin)
-  }
   
   // Priority 1: Explicitly set environment variable (for production/server deployments)
   if (process.env.NEXT_PUBLIC_API_URL) {
@@ -57,51 +49,8 @@ const getApiUrl = async () => {
     return process.env.NEXT_PUBLIC_API_URL
   }
   
-  // Priority 2: If running on localhost (any port), use backend on localhost:8000
-  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-    console.log('Detected localhost, using http://localhost:8000')
-    return 'http://localhost:8000'
-  }
-  
-  // Priority 3: For server deployments, try to detect the correct API URL
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname
-    const protocol = window.location.protocol
-    
-    // Try multiple common API locations
-    const possibleApiUrls = [
-      `${protocol}//${hostname}:8000`,  // Same host, port 8000 (Docker/systemd)
-      `${protocol}//localhost:8000`,     // Localhost fallback
-      `${protocol}//127.0.0.1:8000`,     // 127.0.0.1 fallback
-      `${window.location.origin}`,        // Same origin (Vercel style)
-    ]
-    
-    console.log('Trying to find working API URL from:', possibleApiUrls)
-    
-    // Test each URL to see if API is available
-    for (const apiUrl of possibleApiUrls) {
-      try {
-        console.log(`Testing API URL: ${apiUrl}`)
-        const response = await fetch(`${apiUrl}/health`, {
-          method: 'GET',
-          signal: AbortSignal.timeout(2000) // 2 second timeout
-        })
-        
-        if (response.ok) {
-          console.log(`✅ Found working API at: ${apiUrl}`)
-          return apiUrl
-        }
-      } catch (error) {
-        console.log(`❌ API not available at ${apiUrl}:`, error instanceof Error ? error.message : String(error))
-      }
-    }
-    
-    console.log('⚠️ No working API found, defaulting to localhost:8000')
-    console.log('💡 For production, set NEXT_PUBLIC_API_URL environment variable')
-  }
-  
-  // Fallback for server-side rendering or when no API is found
-  console.log('Using fallback: http://localhost:8000')
+  // Priority 2: For server deployments, try localhost:8000 (most common setup)
+  console.log('No env variable found, using localhost:8000')
   return 'http://localhost:8000'
 }
 
