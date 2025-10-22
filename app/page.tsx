@@ -40,7 +40,7 @@ interface GenerationResult {
 }
 
 // Get API URL - use environment variable, or detect if we're in development vs production
-const getApiUrl = () => {
+const getApiUrl = async () => {
   console.log('getApiUrl called')
   console.log('process.env.NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL)
   console.log('window available:', typeof window !== 'undefined')
@@ -51,25 +51,72 @@ const getApiUrl = () => {
     console.log('window.location.origin:', window.location.origin)
   }
   
-  // If explicitly set via environment variable, use that
+  // Priority 1: Explicitly set environment variable (for production/server deployments)
   if (process.env.NEXT_PUBLIC_API_URL) {
     console.log('Using env variable:', process.env.NEXT_PUBLIC_API_URL)
     return process.env.NEXT_PUBLIC_API_URL
   }
   
-  // If running on localhost (any port), use backend on localhost:8000
+  // Priority 2: If running on localhost (any port), use backend on localhost:8000
   if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
     console.log('Detected localhost, using http://localhost:8000')
     return 'http://localhost:8000'
   }
   
-  // Otherwise, use same origin (production on Vercel)
-  const origin = typeof window !== 'undefined' ? window.location.origin : ''
-  console.log('Using same origin:', origin)
-  return origin
+  // Priority 3: For server deployments, try to detect the correct API URL
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname
+    const protocol = window.location.protocol
+    
+    // Try multiple common API locations
+    const possibleApiUrls = [
+      `${protocol}//${hostname}:8000`,  // Same host, port 8000 (Docker/systemd)
+      `${protocol}//localhost:8000`,     // Localhost fallback
+      `${protocol}//127.0.0.1:8000`,     // 127.0.0.1 fallback
+      `${window.location.origin}`,        // Same origin (Vercel style)
+    ]
+    
+    console.log('Trying to find working API URL from:', possibleApiUrls)
+    
+    // Test each URL to see if API is available
+    for (const apiUrl of possibleApiUrls) {
+      try {
+        console.log(`Testing API URL: ${apiUrl}`)
+        const response = await fetch(`${apiUrl}/health`, {
+          method: 'GET',
+          signal: AbortSignal.timeout(2000) // 2 second timeout
+        })
+        
+        if (response.ok) {
+          console.log(`✅ Found working API at: ${apiUrl}`)
+          return apiUrl
+        }
+      } catch (error) {
+        console.log(`❌ API not available at ${apiUrl}:`, error instanceof Error ? error.message : String(error))
+      }
+    }
+    
+    console.log('⚠️ No working API found, defaulting to localhost:8000')
+    console.log('💡 For production, set NEXT_PUBLIC_API_URL environment variable')
+  }
+  
+  // Fallback for server-side rendering or when no API is found
+  console.log('Using fallback: http://localhost:8000')
+  return 'http://localhost:8000'
 }
 
-const API_URL = getApiUrl()
+// Initialize API URL (will be set asynchronously)
+let API_URL = 'http://localhost:8000' // Default fallback
+
+// Initialize API URL on component mount
+if (typeof window !== 'undefined') {
+  getApiUrl().then(url => {
+    API_URL = url
+    console.log('API URL initialized to:', API_URL)
+  }).catch(error => {
+    console.error('Failed to initialize API URL:', error)
+  })
+}
 
 // Helper function to normalize URLs
 const normalizeUrl = (inputUrl: string): string => {
@@ -114,11 +161,23 @@ export default function Home() {
       // Normalize the URL to ensure it has a protocol
       const normalizedUrl = normalizeUrl(url)
       
-      // Use different endpoints for development vs production
-      const endpoint = API_URL === 'http://localhost:8000' ? '/generate' : '/api/generate'
-      const fullUrl = `${API_URL}${endpoint}`
+      // Wait for API URL to be initialized if it hasn't been yet
+      let currentApiUrl = API_URL
+      if (API_URL === 'http://localhost:8000' && typeof window !== 'undefined') {
+        // If we're still using the default, try to get the correct one
+        try {
+          currentApiUrl = await getApiUrl()
+          API_URL = currentApiUrl // Update for future calls
+        } catch (error) {
+          console.warn('Failed to detect API URL, using fallback:', error)
+        }
+      }
       
-      console.log('API_URL:', API_URL)
+      // Use different endpoints for development vs production
+      const endpoint = currentApiUrl === 'http://localhost:8000' ? '/generate' : '/api/generate'
+      const fullUrl = `${currentApiUrl}${endpoint}`
+      
+      console.log('API_URL:', currentApiUrl)
       console.log('Full URL:', fullUrl)
       console.log('Original URL:', url)
       console.log('Normalized URL:', normalizedUrl)
