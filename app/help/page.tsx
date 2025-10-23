@@ -84,7 +84,7 @@ export default function HelpPage() {
                 <ul className="space-y-2 text-sm text-gray-600">
                   <li className="flex items-start gap-2">
                     <Download className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Click <strong>"Download llms.txt"</strong> to save the file</span>
+                    <span>Click <strong>&ldquo;Download llms.txt&rdquo;</strong> to save the file</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
@@ -92,7 +92,7 @@ export default function HelpPage() {
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Verify it's accessible by visiting the URL</span>
+                    <span>Verify it&apos;s accessible by visiting the URL</span>
                   </li>
                 </ul>
               </div>
