@@ -43,14 +43,14 @@ interface GenerationResult {
 const getApiUrl = async () => {
   console.log('getApiUrl called')
   
-  // For production deployment, always use localhost:8000 (API runs on same server)
-  // This works regardless of basePath or subdomain
-  console.log('Using localhost:8000 for API (production deployment)')
-  return 'http://localhost:8000'
+  // For production deployment under basePath, use Nginx proxy path
+  // Nginx forwards /llm-text-generator/api/* to localhost:8000/*
+  console.log('Using /llm-text-generator/api for API (Nginx proxy)')
+  return '/llm-text-generator/api'
 }
 
 // Initialize API URL (will be set asynchronously)
-let API_URL = 'http://localhost:8000' // Default fallback
+let API_URL = '/llm-text-generator/api' // Default fallback
 
 // Initialize API URL on component mount
 if (typeof window !== 'undefined') {
@@ -279,7 +279,7 @@ export default function Home() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Image 
-                src="llm_logo.webp" 
+                src="/llm_logo.webp" 
                 alt="LLMs.txt Generator Logo" 
                 width={90} 
                 height={90} 
@@ -578,7 +578,7 @@ export default function Home() {
           <div className="text-center mb-8">
             <div className="flex justify-center mb-6">
               <Image 
-                src="llm_logo.webp" 
+                src="/llm_logo.webp" 
                 alt="LLMs.txt Generator Logo" 
                 width={200} 
                 height={200} 
