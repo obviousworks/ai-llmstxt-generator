@@ -42,9 +42,9 @@ An intelligent web application that generates `llms.txt` files for websites with
 
 ### Core Generation & LLM SEO
 - **🗺️ Sitemap-First Crawling**: Automatically discovers ALL pages via sitemap.xml/sitemap_index.xml for complete **AI content optimization**
-- **📋 FAQ Extraction for Semantic SEO**: Extracts FAQs from Schema.org JSON-LD markup - perfekt für **semantic SEO** und **AEO (Answer Engine Optimization)** – extrahiert Q&A für AI-Responses
+- **📋 FAQ Extraction for Semantic SEO**: Extracts FAQs from Schema.org JSON-LD markup - perfect for **semantic SEO** and **AEO (Answer Engine Optimization)** – extracts Q&A for AI-Responses
 - **🎯 Two-Stage Workflow**: Generate summary first, then full-text with all pages optimized for **LLM search optimization**
-- **🚀 LLM SEO Boost**: Optimiere für **Generative Engine Optimization (GEO)** – erhöhe Citations in ChatGPT/Perplexity durch strukturierte FAQs und Semantics
+- **🚀 LLM SEO Boost**: Optimize for **Generative Engine Optimization (GEO)** – increase citations in ChatGPT/Perplexity through structured FAQs and semantics
 - **AI-Enhanced Content**: Uses OpenAI to improve descriptions and organization for better **AI visibility**
 - **Smart Categorization**: Dynamic section organization based on content themes using **topic clustering** for LLMs
 - **Dual File Generation**: Creates both `llms.txt` (curated for **GEO**) and `llms-full.txt` (comprehensive **semantic SEO** coverage)
@@ -147,12 +147,12 @@ http://localhost:3005
 ```markdown
 # obviousworks.ch
 
-## Schulungen
-- [Certified Agile Requirements Specialist (CARS)](https://...): CARS Zertifizierung für agiles Requirements Engineering [📋 19 FAQs]
-- [Certified Professional for Requirements Engineering (CPRE)](https://...): Internationale IREB Zertifizierung
+## Training
+- [Certified Agile Requirements Specialist (CARS)](https://...): CARS certification for agile requirements engineering [📋 19 FAQs]
+- [Certified Professional for Requirements Engineering (CPRE)](https://...): International IREB certification
 
-## Dienstleistungen
-- [Requirements Engineering Services](https://...): Professionelle Unterstützung für Ihre Projekte
+## Services
+- [Requirements Engineering Services](https://...): Professional support for your projects
 ...
 ```
 
@@ -164,13 +164,13 @@ URL: https://www.obviousworks.ch/schulungen/certified-agile-requirements-special
 
 ### FAQs (19 questions)
 
-**Q: Was ist der Certified Agile Requirements Specialist (CARS)?**
+**Q: What is the Certified Agile Requirements Specialist (CARS)?**
 
-A: Der Certified Agile Requirements Specialist (CARS) ist eine Zertifizierung, die fundierte Kenntnisse...
+A: The Certified Agile Requirements Specialist (CARS) is a certification that provides comprehensive knowledge...
 
-**Q: Was sind die Hauptinhalte des CARS-Trainings?**
+**Q: What are the main contents of the CARS training?**
 
-A: Das CARS-Training deckt eine Vielzahl von Themen ab, darunter: Grundlagen des Requirements Engineering...
+A: The CARS training covers a variety of topics, including: Fundamentals of Requirements Engineering...
 ...
 ```
 
@@ -844,14 +844,14 @@ CRON_SCHEDULE="0 2 */14 * *"
 
 This fork is actively maintained by ObviousWorks. Future features will be documented here with implementation dates.
 
-**Planned Features für LLM SEO 2025:**
-- [ ] **GEO/AEO Integration**: Automatische Schema-Markup-Generierung für **LLM search optimization**
-- [ ] Multi-Modal Support: Optimiere für Video/Infographics in AI-Suchen
+**Planned Features for LLM SEO 2025:**
+- [ ] **GEO/AEO Integration**: Automatic Schema markup generation for **LLM search optimization**
+- [ ] Multi-Modal Support: Optimize for Video/Infographics in AI searches
 - [ ] Multi-language support for FAQ extraction
-- [ ] Enhanced AI categorization with custom prompts für **topic clustering**
+- [ ] Enhanced AI categorization with custom prompts for **topic clustering**
 - [ ] Batch processing for multiple websites
 - [ ] Export to additional formats (JSON, XML)
-- [ ] Advanced analytics dashboard mit **AI visibility metrics**
+- [ ] Advanced analytics dashboard with **AI visibility metrics**
 - [ ] Webhook integration for deployment notifications
 - [ ] Database persistence for generation history
 
@@ -1261,14 +1261,14 @@ Forked from [rdyplayerB/ai-llmstxt-generator](https://github.com/rdyplayerB/ai-l
 
 This fork is actively maintained by ObviousWorks. Future features will be documented here with implementation dates.
 
-**Planned Features für LLM SEO 2025:**
-- [ ] **GEO/AEO Integration**: Automatische Schema-Markup-Generierung für **LLM search optimization**
-- [ ] Multi-Modal Support: Optimiere für Video/Infographics in AI-Suchen
+**Planned Features for LLM SEO 2025:**
+- [ ] **GEO/AEO Integration**: Automatic Schema markup generation for **LLM search optimization**
+- [ ] Multi-Modal Support: Optimize for Video/Infographics in AI searches
 - [ ] Multi-language support for FAQ extraction
-- [ ] Enhanced AI categorization with custom prompts für **topic clustering**
+- [ ] Enhanced AI categorization with custom prompts for **topic clustering**
 - [ ] Batch processing for multiple websites
 - [ ] Export to additional formats (JSON, XML)
-- [ ] Advanced analytics dashboard mit **AI visibility metrics**
+- [ ] Advanced analytics dashboard with **AI visibility metrics**
 
 ---
 
@@ -1299,11 +1299,11 @@ This fork is actively maintained by ObviousWorks. Future features will be docume
 
 ## 🚀 Get Started Now!
 
-**Starte deinen llms.txt generator jetzt – booste AI search visibility!** 
+**Start your llms.txt generator now – boost AI search visibility!** 
 
-⭐ **Star this Repo** für Updates zu **LLM SEO 2025** trends  
+⭐ **Star this Repo** for updates on **LLM SEO 2025** trends  
 🔗 **Try it live**: [Free LLMs.txt Generator](https://llm-txt-generator.vercel.app)  
-📚 **Learn more**: [LLM SEO Training bei ObviousWorks](https://obviousworks.ch)
+📚 **Learn more**: [LLM SEO Training at ObviousWorks](https://obviousworks.ch)
 
 Built with ❤️ by [ObviousWorks](https://obviousworks.ch) for the **llms.txt standard** and **AI visibility optimization**.
 

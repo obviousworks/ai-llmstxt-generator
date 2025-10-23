@@ -322,7 +322,7 @@ export default function Home() {
               <div className="space-y-4">
                 <div>
                   <label htmlFor="url" className="block text-sm font-medium text-gray-700 mb-2">
-                    Website URL (für <strong>LLM SEO Optimization</strong>)
+                    Website URL (for <strong>LLM SEO Optimization</strong>)
                   </label>
                   <div className="relative">
                     <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -331,7 +331,7 @@ export default function Home() {
                       id="url"
                       value={url}
                       onChange={(e) => setUrl(e.target.value)}
-                      placeholder="Website URL (z.B. docs.anthropic.com) für AI content optimization"
+                      placeholder="Website URL (e.g. docs.anthropic.com) for AI content optimization"
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-700 placeholder:text-gray-700 text-gray-900"
                       disabled={isLoading}
                     />
@@ -340,7 +340,7 @@ export default function Home() {
 
                 <div>
                   <label htmlFor="maxPages" className="block text-sm font-medium text-gray-700 mb-2">
-                    Max Pages für <strong>LLM-Optimization</strong> (20 empfohlen für schnelle <strong>GEO</strong>)
+                    Max Pages for <strong>LLM-Optimization</strong> (20 recommended for fast <strong>GEO</strong>)
                   </label>
                   <select
                     id="maxPages"
@@ -384,7 +384,7 @@ export default function Home() {
                     ) : (
                       <>
                         <FileText className="w-5 h-5" />
-                        Generate llms.txt (Summary für <strong>AI Visibility</strong>)
+                        Generate llms.txt (Summary for <strong>AI Visibility</strong>)
                       </>
                     )}
                   </button>
@@ -588,8 +588,8 @@ export default function Home() {
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">About ObviousWorks</h2>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Schweiz&apos; Top-Experten für <strong>IREB®</strong>, Agile &amp; <strong>AI/LLM Integration</strong>. Bridge zu <strong>AI-powered future</strong> mit Tools wie diesem <strong>llms.txt generator</strong>. 
-              Nutze unseren <strong>llms.txt generator</strong> in <strong>AI/LLM Training</strong>-Programmen: Von <strong>ChatGPT for SEO</strong> bis <strong>AI Requirements Engineering</strong> – optimiere Sites für Perplexity & Gemini.
+              Switzerland&apos;s top experts for <strong>IREB®</strong>, Agile &amp; <strong>AI/LLM Integration</strong>. Bridge to the <strong>AI-powered future</strong> with tools like this <strong>llms.txt generator</strong>. 
+              Use our <strong>llms.txt generator</strong> in <strong>AI/LLM Training</strong> programs: From <strong>ChatGPT for SEO</strong> to <strong>AI Requirements Engineering</strong> – optimize sites for Perplexity & Gemini.
             </p>
           </div>
           
@@ -641,7 +641,7 @@ export default function Home() {
       <footer className="bg-white border-t">
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="text-center text-sm text-gray-600">
-            <p>Built für <strong>llms.txt</strong> & <strong>LLM search optimization</strong>. Starte jetzt – booste deine <strong>AI SEO</strong>! Learn more at <a href="https://llmstxt.org" className="text-blue-600 hover:underline">llmstxt.org</a></p>
+            <p>Built for <strong>llms.txt</strong> & <strong>LLM search optimization</strong>. Start now – boost your <strong>AI SEO</strong>! Learn more at <a href="https://llmstxt.org" className="text-blue-600 hover:underline">llmstxt.org</a></p>
             <p className="mt-2">🚀 <strong>Free llms.txt generator</strong> for <strong>AI visibility boost</strong> - by <a href="https://obviousworks.ch" className="text-blue-600 hover:underline">ObviousWorks.ch</a></p>
           </div>
         </div>
