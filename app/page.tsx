@@ -279,7 +279,7 @@ export default function Home() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Image 
-                src="/llm_logo.webp" 
+                src="/llm-text-generator/llm_logo.webp" 
                 alt="LLMs.txt Generator Logo" 
                 width={90} 
                 height={90} 
@@ -578,7 +578,7 @@ export default function Home() {
           <div className="text-center mb-8">
             <div className="flex justify-center mb-6">
               <Image 
-                src="/llm_logo.webp" 
+                src="/llm-text-generator/llm_logo.webp" 
                 alt="LLMs.txt Generator Logo" 
                 width={200} 
                 height={200} 
