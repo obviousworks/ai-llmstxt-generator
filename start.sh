@@ -59,7 +59,7 @@ sleep 3
 
 # Start frontend
 echo "🎨 Starting frontend server..."
-npm run dev &
+npm run dev -- --port 5001 &
 FRONTEND_PID=$!
 
 # Function to cleanup on exit
@@ -76,7 +76,7 @@ trap cleanup SIGINT SIGTERM
 echo ""
 echo "✅ Services started successfully!"
 echo ""
-echo "🌐 Frontend: http://localhost:3005"
+echo "🌐 Frontend: http://localhost:5001"
 echo "🔌 Backend API: http://localhost:8000"
 echo "📚 API Docs: http://localhost:8000/docs"
 echo ""
@@ -84,4 +84,4 @@ echo "Press Ctrl+C to stop all services"
 echo ""
 
 # Wait for processes
-wait 
+wait
