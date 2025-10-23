@@ -122,8 +122,8 @@ export default function Home() {
         }
       }
       
-      // Use different endpoints for development vs production
-      const endpoint = currentApiUrl === 'http://localhost:8000' ? '/generate' : '/api/generate'
+      // Use generate endpoint
+      const endpoint = '/generate'
       const fullUrl = `${currentApiUrl}${endpoint}`
       
       console.log('API_URL:', currentApiUrl)
@@ -312,7 +312,7 @@ export default function Home() {
       <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-b">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <blockquote className="text-lg text-gray-700 italic border-l-4 border-blue-500 pl-4">
-            "The ultimate <strong>llms.txt generator</strong> for <strong>LLM SEO & AI visibility</strong> in 2025! Revolutionize your <strong>Generative Engine Optimization (GEO)</strong> with Sitemap-Crawling, FAQ-Detection and <strong>semantic SEO</strong> - boost citations in ChatGPT, Perplexity & Gemini."
+            &ldquo;The ultimate <strong>llms.txt generator</strong> for <strong>LLM SEO &amp; AI visibility</strong> in 2025! Revolutionize your <strong>Generative Engine Optimization (GEO)</strong> with Sitemap-Crawling, FAQ-Detection and <strong>semantic SEO</strong> - boost citations in ChatGPT, Perplexity &amp; Gemini.&rdquo;
           </blockquote>
         </div>
       </div>
@@ -593,7 +593,7 @@ export default function Home() {
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">About ObviousWorks</h2>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Schweiz' Top-Experten für <strong>IREB®</strong>, Agile & <strong>AI/LLM Integration</strong>. Bridge zu <strong>AI-powered future</strong> mit Tools wie diesem <strong>llms.txt generator</strong>. 
+              Schweiz&apos; Top-Experten für <strong>IREB®</strong>, Agile &amp; <strong>AI/LLM Integration</strong>. Bridge zu <strong>AI-powered future</strong> mit Tools wie diesem <strong>llms.txt generator</strong>. 
               Nutze unseren <strong>llms.txt generator</strong> in <strong>AI/LLM Training</strong>-Programmen: Von <strong>ChatGPT for SEO</strong> bis <strong>AI Requirements Engineering</strong> – optimiere Sites für Perplexity & Gemini.
             </p>
           </div>

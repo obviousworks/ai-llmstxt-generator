@@ -1584,6 +1584,11 @@ async def generate_llms_txt(request: CrawlRequest):
         error_message = str(e) if str(e) else f"{type(e).__name__} occurred"
         raise HTTPException(status_code=500, detail=f"Error generating llms.txt: {error_message}")
 
+@app.post("/api/generate", response_model=LLMSTxtResponse)
+async def api_generate_llms_txt(request: CrawlRequest):
+    """Proxy endpoint for /generate to support nginx proxy setups"""
+    return await generate_llms_txt(request)
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
