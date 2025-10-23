@@ -43,14 +43,9 @@ interface GenerationResult {
 const getApiUrl = async () => {
   console.log('getApiUrl called')
   
-  // Priority 1: Explicitly set environment variable (for production/server deployments)
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    console.log('Using env variable:', process.env.NEXT_PUBLIC_API_URL)
-    return process.env.NEXT_PUBLIC_API_URL
-  }
-  
-  // Priority 2: For server deployments, try localhost:8000 (most common setup)
-  console.log('No env variable found, using localhost:8000')
+  // For production deployment, always use localhost:8000 (API runs on same server)
+  // This works regardless of basePath or subdomain
+  console.log('Using localhost:8000 for API (production deployment)')
   return 'http://localhost:8000'
 }
 
@@ -284,7 +279,7 @@ export default function Home() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Image 
-                src="/llm_logo.webp" 
+                src="llm_logo.webp" 
                 alt="LLMs.txt Generator Logo" 
                 width={90} 
                 height={90} 
@@ -583,7 +578,7 @@ export default function Home() {
           <div className="text-center mb-8">
             <div className="flex justify-center mb-6">
               <Image 
-                src="/llm_logo.webp" 
+                src="llm_logo.webp" 
                 alt="LLMs.txt Generator Logo" 
                 width={200} 
                 height={200} 
