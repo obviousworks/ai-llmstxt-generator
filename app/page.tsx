@@ -208,25 +208,53 @@ export default function Home() {
   }
 
   const downloadFile = (content: string, filename: string) => {
-    // Add UTF-8 BOM (Byte Order Mark) to ensure proper encoding in browsers
-    const BOM = '\uFEFF'
-    const contentWithBOM = BOM + content
-    
-    // Create blob with explicit UTF-8 encoding
-    const blob = new Blob([contentWithBOM], { type: 'text/plain;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    a.style.display = 'none'
-    
-    // Append to body, click, and remove to ensure proper filename
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    
-    // Clean up the URL object
-    setTimeout(() => URL.revokeObjectURL(url), 100)
+    try {
+      // Add UTF-8 BOM (Byte Order Mark) to ensure proper encoding
+      const BOM = '\uFEFF'
+      const contentWithBOM = BOM + content
+      
+      // Encode content as base64 data URL
+      // This approach is more reliable for preserving filenames
+      const base64Content = btoa(unescape(encodeURIComponent(contentWithBOM)))
+      const dataUrl = `data:text/plain;charset=utf-8;base64,${base64Content}`
+      
+      // Create download link
+      const a = document.createElement('a')
+      a.href = dataUrl
+      a.download = filename
+      a.style.display = 'none'
+      
+      // Append, click, and remove
+      document.body.appendChild(a)
+      a.click()
+      
+      // Cleanup after a short delay
+      setTimeout(() => {
+        document.body.removeChild(a)
+      }, 100)
+    } catch (error) {
+      console.error('Download failed:', error)
+      // Fallback to blob URL method
+      try {
+        const BOM = '\uFEFF'
+        const contentWithBOM = BOM + content
+        const blob = new Blob([contentWithBOM], { type: 'text/plain;charset=utf-8' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = filename
+        a.style.display = 'none'
+        document.body.appendChild(a)
+        a.click()
+        setTimeout(() => {
+          document.body.removeChild(a)
+          URL.revokeObjectURL(url)
+        }, 100)
+      } catch (fallbackError) {
+        console.error('Fallback download also failed:', fallbackError)
+        alert('Download failed. Please try again.')
+      }
+    }
   }
 
   return (
