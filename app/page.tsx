@@ -218,8 +218,15 @@ export default function Home() {
     const a = document.createElement('a')
     a.href = url
     a.download = filename
+    a.style.display = 'none'
+    
+    // Append to body, click, and remove to ensure proper filename
+    document.body.appendChild(a)
     a.click()
-    URL.revokeObjectURL(url)
+    document.body.removeChild(a)
+    
+    // Clean up the URL object
+    setTimeout(() => URL.revokeObjectURL(url), 100)
   }
 
   return (
