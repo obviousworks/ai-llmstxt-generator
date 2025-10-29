@@ -4,6 +4,14 @@ import { useState } from 'react'
 import { Download, Globe, FileText, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { 
+  trackUrlSubmission, 
+  trackGenerationSuccess, 
+  trackGenerationError, 
+  trackFileDownload,
+  trackExistingFilesFound,
+  trackExistingFilesChoice
+} from '../lib/analytics'
 
 interface ValidationError {
   type?: string
@@ -43,6 +51,12 @@ interface GenerationResult {
 const getApiUrl = async () => {
   console.log('getApiUrl called')
   
+  // Check if we're in development mode
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    console.log('Using http://localhost:8000 for API (local development)')
+    return 'http://localhost:8000'
+  }
+  
   // For production deployment under basePath, use Nginx proxy path
   // Nginx forwards /llm-text-generator/api/* to localhost:8000/*
   console.log('Using /llm-text-generator/api for API (Nginx proxy)')
@@ -50,7 +64,7 @@ const getApiUrl = async () => {
 }
 
 // Initialize API URL (will be set asynchronously)
-let API_URL = '/llm-text-generator/api' // Default fallback
+let API_URL = 'http://localhost:8000' // Default for local development
 
 // Initialize API URL on component mount
 if (typeof window !== 'undefined') {
@@ -104,6 +118,10 @@ export default function Home() {
     try {
       // Normalize the URL to ensure it has a protocol
       const normalizedUrl = normalizeUrl(url)
+      
+      // Track generation start
+      const generationType = fulltext ? 'fulltext' : 'summary'
+      trackUrlSubmission(normalizedUrl, generationType)
       
       // Wait for API URL to be initialized if it hasn't been yet
       let currentApiUrl = API_URL
@@ -176,6 +194,8 @@ export default function Home() {
       if (data.existing_files_found && !forceRegenerate) {
         setExistingFiles(data.existing_files_found)
         setShowExistingDialog(true)
+        // Track existing files found
+        trackExistingFilesFound(normalizedUrl, Object.keys(data.existing_files_found))
         // Reset loading states when showing dialog
         if (fulltext) {
           setIsLoadingFulltext(false)
@@ -185,6 +205,15 @@ export default function Home() {
         return
       }
       
+      // Track successful generation
+      trackGenerationSuccess(
+        normalizedUrl,
+        generationType,
+        data.pages_analyzed.length,
+        data.generation_time,
+        data.ai_enhanced
+      )
+      
       if (fulltext) {
         setFulltextResult(data)
       } else {
@@ -193,6 +222,12 @@ export default function Home() {
     } catch (err) {
       console.error('Full error:', err)
       const errorMsg = err instanceof Error ? err.message : 'An error occurred'
+      
+      // Track generation error
+      const normalizedUrl = normalizeUrl(url)
+      const generationType = fulltext ? 'fulltext' : 'summary'
+      trackGenerationError(normalizedUrl, generationType, errorMsg)
+      
       if (fulltext) {
         setFulltextError(errorMsg)
       } else {
@@ -209,6 +244,9 @@ export default function Home() {
 
   const downloadFile = (content: string, filename: string) => {
     try {
+      // Track file download
+      trackFileDownload(filename, url, content.length)
+      
       // Add UTF-8 BOM (Byte Order Mark) to ensure proper encoding
       const BOM = '\uFEFF'
       const contentWithBOM = BOM + content
@@ -278,6 +316,7 @@ export default function Home() {
               <div className="flex gap-3">
                 <button
                   onClick={() => {
+                    trackExistingFilesChoice(url, 'regenerate_summary')
                     setShowExistingDialog(false)
                     generateLLMSText(false, true)
                   }}
@@ -287,6 +326,7 @@ export default function Home() {
                 </button>
                 <button
                   onClick={() => {
+                    trackExistingFilesChoice(url, 'regenerate_fulltext')
                     setShowExistingDialog(false)
                     generateLLMSText(true, true)
                   }}
@@ -297,6 +337,7 @@ export default function Home() {
               </div>
               <button
                 onClick={() => {
+                  trackExistingFilesChoice(url, 'cancel')
                   setShowExistingDialog(false)
                   setExistingFiles(null)
                 }}
@@ -632,28 +673,28 @@ export default function Home() {
             <div className="bg-white rounded-lg p-6 shadow-sm">
               <h3 className="font-semibold text-gray-900 mb-3">🧠 AI & LLM Training</h3>
               <ul className="text-sm text-gray-600 space-y-1">
-                <li>• <a href="https://www.obviousworks.ch/schulungen/ai-masterclass/" className="hover:text-blue-600">AI Masterclass</a></li>
-                <li>• <a href="https://www.obviousworks.ch/schulungen/chatgpt-101/" className="hover:text-blue-600">ChatGPT 101 for Beginners</a></li>
-                <li>• <a href="https://www.obviousworks.ch/schulungen/generative-ai-getting-started/" className="hover:text-blue-600">Getting Started with Generative AI</a></li>
-                <li>• <a href="https://www.obviousworks.ch/schulungen/chatgpt-coding/" className="hover:text-blue-600">ChatGPT Coding</a></li>
+                <li>• <a href="https://www.obviousworks.ch/en/trainings/ai-masterclass/" className="hover:text-blue-600">AI Masterclass</a></li>
+                <li>• <a href="https://www.obviousworks.ch/en/trainings/chatgpt-101/" className="hover:text-blue-600">ChatGPT 101 for Beginners</a></li>
+                <li>• <a href="https://www.obviousworks.ch/en/trainings/entry-into-the-generative-ki/" className="hover:text-blue-600">Getting Started with Generative AI</a></li>
+                <li>• <a href="https://www.obviousworks.ch/en/trainings/chatgpt-coding/" className="hover:text-blue-600">ChatGPT Coding</a></li>
               </ul>
             </div>
             
             <div className="bg-white rounded-lg p-6 shadow-sm">
               <h3 className="font-semibold text-gray-900 mb-3">🚀 Advanced AI Development</h3>
               <ul className="text-sm text-gray-600 space-y-1">
-                <li>• <a href="https://www.obviousworks.ch/schulungen/chatgpt-advanced/" className="hover:text-blue-600">ChatGPT Advanced</a></li>
-                <li>• <a href="https://www.obviousworks.ch/schulungen/generative-ai-fuer-effiziente-softwareentwicklung/" className="hover:text-blue-600">Generative AI for Software Development</a></li>
-                <li>• <a href="https://www.obviousworks.ch/schulungen/ai-requirements-engineering/" className="hover:text-blue-600">AI Requirements Engineering</a></li>
-                <li>• <a href="https://www.obviousworks.ch/schulungen/ai-developer-bootcamp/" className="hover:text-blue-600">AI Developer Bootcamp</a></li>
+                <li>• <a href="https://www.obviousworks.ch/en/trainings/chatgpt-advanced/" className="hover:text-blue-600">ChatGPT Advanced</a></li>
+                <li>• <a href="https://www.obviousworks.ch/en/trainings/generative-ai-for-efficient-software-development-2/" className="hover:text-blue-600">Generative AI for Software Development</a></li>
+                <li>• <a href="https://www.obviousworks.ch/en/trainings/ai-requirements-engineering/" className="hover:text-blue-600">AI Requirements Engineering</a></li>
+                <li>• <a href="https://www.obviousworks.ch/en/trainings/ai-developer-bootcamp/" className="hover:text-blue-600">AI Developer Bootcamp</a></li>
               </ul>
             </div>
             
             <div className="bg-white rounded-lg p-6 shadow-sm">
               <h3 className="font-semibold text-gray-900 mb-3">🎓 Certifications</h3>
               <ul className="text-sm text-gray-600 space-y-1">
-                <li>• <a href="https://www.obviousworks.ch/schulungen/ireb-cpre-foundation/" className="hover:text-blue-600">IREB® CPRE with AI Modules</a></li>
-                <li>• <a href="https://www.obviousworks.ch/schulungen/agile-requirements-specialist/" className="hover:text-blue-600">CARS® with AI Prioritization</a></li>
+                <li>• <a href="https://www.obviousworks.ch/en/trainings/ireb-certified-professional-requirements-engineering/" className="hover:text-blue-600">IREB® CPRE with AI Modules</a></li>
+                <li>• <a href="https://www.obviousworks.ch/en/trainings/certified-agile-requirements-specialist-cars/" className="hover:text-blue-600">CARS® with AI Prioritization</a></li>
                 <li>• Requirements Engineering</li>
                 <li>• Agile & Scrum Methodologies</li>
               </ul>

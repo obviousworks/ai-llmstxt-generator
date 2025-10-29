@@ -58,11 +58,12 @@ An intelligent web application that generates `llms.txt` files for websites with
 - **💚 Health Monitoring**: Auto-restart on failures
 - **📧 Notifications**: Email and Slack alerts (optional)
 
-### Modern Interface
+### Modern Interface & Analytics
 - **Beautiful UI**: Responsive design built with Next.js and Tailwind CSS
 - **Real-time Progress**: Live feedback during crawling and generation
 - **Instant Downloads**: Direct download of generated files
 - **Public Access**: Share with your team via Nginx
+- **📊 Google Analytics 4**: Track which websites generate llms.txt files, usage patterns, and success rates
 
 ## ⚡ Quick Installation
 
@@ -643,7 +644,22 @@ DEPLOY_TARGETS=(
 
 **See [AUTOMATION_SETUP.md](./AUTOMATION_SETUP.md) for complete guide.**
 
-## 📊 Monitoring
+## 📊 Analytics & Monitoring
+
+### Google Analytics 4 Integration
+
+Track usage patterns, popular websites, and generation success rates.
+
+**Features:**
+- ✅ Track which URLs generate llms.txt files
+- ✅ Monitor generation success/error rates
+- ✅ Analyze user behavior and patterns
+- ✅ File download tracking
+- ✅ Privacy-focused GA4 implementation
+
+**See [GOOGLE_ANALYTICS_SETUP.md](./GOOGLE_ANALYTICS_SETUP.md) for complete guide.**
+
+### Service Monitoring
 
 Monitor services and automate health checks.
 
